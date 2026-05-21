@@ -113,7 +113,7 @@ final class AppViewModel: ObservableObject {
         }
         isScanning = true
         let scanner = self.scanner
-        Task.detached(priority: .utility) { [weak self] in
+        Task.detached(priority: .utility) { [self] in
             var raw = scanner.scan()
             raw.sort { $0.sizeBytes > $1.sizeBytes }
             if let idx = Self.indexOfActive(raw) {
@@ -121,7 +121,7 @@ final class AppViewModel: ObservableObject {
                 raw[idx] = raw[idx].withEstimatedTurns(turns)
             }
             let result = raw
-            await MainActor.run { self?.applyScanResult(result) }
+            await self.applyScanResult(result)
         }
     }
 
