@@ -35,6 +35,10 @@ Initial implementation of V0 + V1 per PRD / TechSpec.
 - Hygiene reminders: long session (60+ turns) and stale session (7d / >3MB),
   deduped 24h (BR-019/027/028).
 - Launch at login via SMAppService.
+- In-app feature guide (How it works) opened from the panel header.
+- zh-Hans / en localization with live in-app switching (System / English / 中文).
+- Park & Restart (Auto authorize) variant that starts the new session with
+  `claude --dangerously-skip-permissions` to skip every permission prompt.
 
 ### Known deviations
 - Built and structured as a Swift Package (SPM). Use `build-app.sh` on a Mac to

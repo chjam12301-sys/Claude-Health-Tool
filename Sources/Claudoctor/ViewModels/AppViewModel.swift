@@ -239,7 +239,7 @@ final class AppViewModel: ObservableObject {
         park(active)
     }
 
-    func park(_ session: SessionInfo) {
+    func park(_ session: SessionInfo, autoGrant: Bool = false) {
         let hooks = ParkAndRestartCoordinator.Hooks(
             updateProxyStatus: { [weak self] result in self?.applyProxyTestResult(result) },
             sessionsChanged: { [weak self] in self?.scanNow() },
@@ -250,6 +250,7 @@ final class AppViewModel: ObservableObject {
                 session: session,
                 settings: settings,
                 claudeCLIAvailable: claudeCLIAvailable,
+                autoGrantPermissions: autoGrant,
                 hooks: hooks)
         }
     }

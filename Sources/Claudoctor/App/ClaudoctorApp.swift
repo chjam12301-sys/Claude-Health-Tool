@@ -22,6 +22,11 @@ struct ClaudoctorApp: App {
             AboutWindow()
         }
         .windowResizability(.contentSize)
+
+        Window("Claudoctor", id: "guide") {
+            GuideWindow()
+        }
+        .windowResizability(.contentSize)
     }
 }
 

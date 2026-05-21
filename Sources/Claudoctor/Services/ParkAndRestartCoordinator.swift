@@ -44,10 +44,13 @@ final class ParkAndRestartCoordinator: ObservableObject {
     var isRunning: Bool { phase != .idle }
 
     /// 执行 Park & Restart。`session` 应为活跃 session（BR-007，由调用方确定）。
+    /// `autoGrantPermissions = true` 时，新会话用 `claude --dangerously-skip-permissions`
+    /// 启动，跳过所有权限确认。
     func execute(
         session: SessionInfo,
         settings: AppSettings,
         claudeCLIAvailable: Bool,
+        autoGrantPermissions: Bool = false,
         hooks: Hooks
     ) async {
         guard phase == .idle else { return }
@@ -99,8 +102,12 @@ final class ParkAndRestartCoordinator: ObservableObject {
         // Step 6：启动新终端（BR-036）。失败弹 KS-07，但仍视为已 park。
         phase = .openingTerminal
         let projectRoot = URL(fileURLWithPath: session.projectPath, isDirectory: true)
+        let baseCommand = autoGrantPermissions
+            ? "claude --dangerously-skip-permissions"
+            : "claude"
         let command = TerminalLauncher.buildCommand(
             workingDir: projectRoot,
+            baseCommand: baseCommand,
             proxy: settings.proxyConfig,
             injectProxy: settings.injectProxyToTerminal
         )

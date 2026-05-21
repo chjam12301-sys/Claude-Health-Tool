@@ -178,6 +178,25 @@ extension Localizer {
             "%@ 已闲置 7 天以上（%@），建议归档。",
         "Long session detected": "检测到长会话",
         "%@ has run 60+ turns. Consider Park & Restart.":
-            "%@ 已运行 60+ 轮，建议暂存并重启。"
+            "%@ 已运行 60+ 轮，建议暂存并重启。",
+
+        // Park 控件 + Auto 授权
+        "Auto authorize": "Auto 授权",
+        "Generate a handoff note, archive this session, and start a fresh one.":
+            "生成交接笔记、归档当前会话，并开一个全新会话。",
+        "Start the new session with all permissions pre-approved (claude --dangerously-skip-permissions).":
+            "以预先批准所有权限的方式启动新会话（claude --dangerously-skip-permissions），跳过所有权限确认。",
+
+        // 功能介绍
+        "How it works": "功能介绍",
+        "Monitor session health": "监控会话健康",
+        "See every project's session size at a glance. Sessions over the threshold are archived to ~/claude-archive/ automatically.":
+            "在菜单栏一眼看到每个项目的会话大小。超过阈值的会话会自动归档到 ~/claude-archive/。",
+        "Generate a handoff note for the current session, archive it, then open a fresh session — start over without losing context.":
+            "为当前会话生成交接笔记，归档原会话，再开一个全新会话——既清理上下文又不丢记忆。",
+        "Same as Park & Restart, but the new session starts with claude --dangerously-skip-permissions, skipping every permission prompt. Use with care.":
+            "和暂存并重启一样，但新会话用 claude --dangerously-skip-permissions 启动，跳过所有权限确认。请谨慎使用。",
+        "Auto-detect or set a proxy, with a pre-flight network check before parking so a network failure never costs you a session.":
+            "自动检测或手动配置代理，并在暂存前做网络预检——网络故障也不会让你丢失会话。"
     ]
 }

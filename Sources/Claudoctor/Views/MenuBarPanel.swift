@@ -41,6 +41,14 @@ struct MenuBarPanel: View {
                 Text("v\(AppInfo.version)")
                     .font(.cdFootnote)
                     .foregroundStyle(.secondary)
+                Button {
+                    openWindow(id: "guide")
+                    NSApp.activate(ignoringOtherApps: true)
+                } label: {
+                    Image(systemName: "questionmark.circle")
+                }
+                .buttonStyle(.plain)
+                .help(loc("How it works"))
             }
             Text(locf("%d projects · %d bloated", viewModel.projectCount, viewModel.bloatedCount))
                 .font(.cdSubhead)
@@ -122,10 +130,10 @@ struct MenuBarPanel: View {
             ParkButton(
                 coordinator: viewModel.parkCoordinator,
                 enabled: viewModel.claudeCLIAvailable,
-                disabledReason: loc("Claude CLI not found")
-            ) {
-                viewModel.park(session)
-            }
+                disabledReason: loc("Claude CLI not found"),
+                onPark: { viewModel.park(session) },
+                onParkAuto: { viewModel.park(session, autoGrant: true) }
+            )
         }
         .padding(Spacing.sm)
         .background(
