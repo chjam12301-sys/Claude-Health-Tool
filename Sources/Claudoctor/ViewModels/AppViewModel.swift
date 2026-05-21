@@ -125,7 +125,7 @@ final class AppViewModel: ObservableObject {
         }
     }
 
-    private static func indexOfActive(_ sessions: [SessionInfo]) -> Int? {
+    nonisolated private static func indexOfActive(_ sessions: [SessionInfo]) -> Int? {
         guard !sessions.isEmpty else { return nil }
         var best = sessions.startIndex
         for i in sessions.indices where sessions[i].modifiedAt > sessions[best].modifiedAt {
