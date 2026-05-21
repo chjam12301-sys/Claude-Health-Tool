@@ -13,10 +13,10 @@ struct ParkButton: View {
                 if let label = coordinator.phase.label {
                     ProgressView()
                         .controlSize(.small)
-                    Text(label)
+                    Text(loc(label))
                 } else {
                     Image(systemName: Symbols.park)
-                    Text("Park & Restart")
+                    Text(loc("Park & Restart"))
                 }
             }
             .font(.cdBody)

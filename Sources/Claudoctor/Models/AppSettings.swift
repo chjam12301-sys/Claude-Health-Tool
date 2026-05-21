@@ -9,6 +9,7 @@ struct AppSettings: Codable, Equatable {
     var archiveDirectory: URL = AppSettings.defaultArchiveDirectory
     var preferredTerminal: TerminalApp = .auto
     var launchAtLogin: Bool = false
+    var appLanguage: AppLanguage = .system
 
     // V1 新增
     var proxyConfig: ProxyConfig = ProxyConfig(mode: .autoDetect)

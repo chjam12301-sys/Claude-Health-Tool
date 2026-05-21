@@ -55,8 +55,8 @@ final class ParkAndRestartCoordinator: ObservableObject {
 
         // Step 0b：CLI 可用性（KS-02）
         guard claudeCLIAvailable else {
-            notifications.send(subtitle: "Claude CLI not found",
-                               body: "Install Claude Code or fix your PATH.")
+            notifications.send(subtitle: loc("Claude CLI not found"),
+                               body: loc("Install Claude Code or fix your PATH."))
             return
         }
 
@@ -66,8 +66,9 @@ final class ParkAndRestartCoordinator: ObservableObject {
             let result = await tester.test(via: settings.proxyConfig.effectiveURL)
             hooks.updateProxyStatus(result)
             guard result.status == .reachable else {
-                notifications.send(subtitle: "Pre-flight failed",
-                                   body: "\(result.status.displayString). Original session preserved.")
+                notifications.send(subtitle: loc("Pre-flight failed"),
+                                   body: locf("%@. Original session preserved.",
+                                              loc(result.status.displayString)))
                 return
             }
         }
@@ -90,8 +91,8 @@ final class ParkAndRestartCoordinator: ObservableObject {
             try archiver.archive(session)
             hooks.sessionsChanged()
         } catch {
-            notifications.send(subtitle: "Park failed",
-                               body: "Couldn't archive session: \(error.localizedDescription)")
+            notifications.send(subtitle: loc("Park failed"),
+                               body: locf("Couldn't archive session: %@", error.localizedDescription))
             return
         }
 
@@ -110,18 +111,18 @@ final class ParkAndRestartCoordinator: ObservableObject {
                 workingDir: projectRoot
             )
         } catch {
-            notifications.send(subtitle: "Terminal launch failed",
-                               body: "Grant Automation permission in System Settings.")
+            notifications.send(subtitle: loc("Terminal launch failed"),
+                               body: loc("Grant Automation permission in System Settings."))
         }
 
         // Step 7 / 8：关闭面板 + 成功通知。
         hooks.dismissPanel()
         if let handoffPath {
-            notifications.send(subtitle: "Session parked",
-                               body: "Handoff saved to .notes/\(handoffPath.lastPathComponent)")
+            notifications.send(subtitle: loc("Session parked"),
+                               body: locf("Handoff saved to .notes/%@", handoffPath.lastPathComponent))
         } else {
-            notifications.send(subtitle: "Parked without handoff",
-                               body: "Couldn't summarize. Original session archived.")
+            notifications.send(subtitle: loc("Parked without handoff"),
+                               body: loc("Couldn't summarize. Original session archived."))
         }
     }
 }

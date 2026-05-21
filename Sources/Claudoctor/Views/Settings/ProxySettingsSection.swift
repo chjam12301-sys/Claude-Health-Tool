@@ -15,13 +15,13 @@ struct ProxySettingsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("Proxy")
+            Text(loc("Proxy"))
                 .font(.cdHeadline)
 
             Picker("Mode", selection: modeBinding) {
-                Text("Auto-detect").tag(ProxyMode.autoDetect)
-                Text("Manual").tag(ProxyMode.manual)
-                Text("Disabled").tag(ProxyMode.disabled)
+                Text(loc("Auto-detect")).tag(ProxyMode.autoDetect)
+                Text(loc("Manual")).tag(ProxyMode.manual)
+                Text(loc("Disabled")).tag(ProxyMode.disabled)
             }
             .pickerStyle(.radioGroup)
             .labelsHidden()
@@ -36,7 +36,7 @@ struct ProxySettingsSection: View {
             Button(action: runTest) {
                 HStack(spacing: Spacing.xs) {
                     if isTesting { ProgressView().controlSize(.small) }
-                    Text(isTesting ? "Testing..." : "Test connection")
+                    Text(isTesting ? loc("Testing...") : loc("Test connection"))
                 }
             }
             .buttonStyle(.plain)
@@ -44,7 +44,7 @@ struct ProxySettingsSection: View {
                       || config.mode == .disabled
                       || (config.mode == .manual && (httpInvalid || httpText.isEmpty)))
 
-            Toggle("Inject proxy to spawned terminal", isOn: $injectToTerminal)
+            Toggle(loc("Inject proxy to spawned terminal"), isOn: $injectToTerminal)
                 .font(.cdBody)
         }
         .onAppear(perform: syncFromConfig)
@@ -55,7 +55,7 @@ struct ProxySettingsSection: View {
     private var urlFields: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             HStack(spacing: Spacing.sm) {
-                Text("HTTP URL:")
+                Text(loc("HTTP URL:"))
                     .font(.cdSubhead)
                     .frame(width: 80, alignment: .leading)
                 TextField("http://127.0.0.1:7890", text: $httpText)
@@ -68,13 +68,13 @@ struct ProxySettingsSection: View {
                     )
             }
             if httpInvalid {
-                Text("Invalid URL. Use http://host:port or socks5://host:port")
+                Text(loc("Invalid URL. Use http://host:port or socks5://host:port"))
                     .font(.cdFootnote)
                     .foregroundStyle(.red)
             }
 
             HStack(spacing: Spacing.sm) {
-                Text("SOCKS URL:")
+                Text(loc("SOCKS URL:"))
                     .font(.cdSubhead)
                     .frame(width: 80, alignment: .leading)
                 TextField("(optional, e.g. socks5://127.0.0.1:7891)", text: $socksText)
@@ -91,7 +91,7 @@ struct ProxySettingsSection: View {
 
     private var statusRow: some View {
         HStack(spacing: Spacing.xs) {
-            Text("Status:")
+            Text(loc("Status:"))
                 .font(.cdSubhead)
                 .foregroundStyle(.secondary)
             Circle()
@@ -126,13 +126,16 @@ struct ProxySettingsSection: View {
     }
 
     private var statusText: String {
-        if config.mode == .disabled { return "Proxy disabled" }
-        var text = config.lastTestStatus.displayString
+        if config.mode == .disabled { return loc("Proxy disabled") }
+        var text: String
         if config.lastTestStatus == .reachable, let ms = config.lastTestLatencyMs {
-            text += " in \(ms)ms"
+            text = locf("Reachable in %dms", ms)
+        } else {
+            text = loc(config.lastTestStatus.displayString)
         }
         if let at = config.lastTestedAt {
-            text += " · tested \(Formatters.relativeTime(from: at))"
+            let when = Formatters.relativeTime(from: at, language: Localizer.shared.effective)
+            text += " · " + locf("tested %@", when)
         }
         return text
     }

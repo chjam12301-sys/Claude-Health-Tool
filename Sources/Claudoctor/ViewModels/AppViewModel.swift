@@ -50,9 +50,11 @@ final class AppViewModel: ObservableObject {
     private var suppressLoginReaction = false
 
     init() {
-        self.settings = AppSettings.load()
+        let loaded = AppSettings.load()
+        self.settings = loaded
         self.parkCoordinator = ParkAndRestartCoordinator(
             tester: proxyTester, cli: cli, notifications: notifications)
+        Localizer.shared.language = loaded.appLanguage
     }
 
     // MARK: - F1 启动流程
@@ -176,13 +178,13 @@ final class AppViewModel: ObservableObject {
             } catch ArchiveError.directoryNotWritable {
                 autoArchivePausedUntil = .distantFuture
                 archiveDirectoryWritable = false
-                notifications.send(subtitle: "Archive paused",
-                                   body: "Selected archive directory is not writable.")
+                notifications.send(subtitle: loc("Archive paused"),
+                                   body: loc("Selected archive directory is not writable."))
                 break
             } catch ArchiveError.diskFull {
                 autoArchivePausedUntil = Date().addingTimeInterval(3600)   // CD-009
-                notifications.send(subtitle: "Archive paused",
-                                   body: "Disk is full. Will retry in 1 hour.")
+                notifications.send(subtitle: loc("Archive paused"),
+                                   body: loc("Disk is full. Will retry in 1 hour."))
                 break
             } catch {
                 NSLog("[CD-004] Archive error \(session.id): \(error.localizedDescription)")
@@ -191,9 +193,12 @@ final class AppViewModel: ObservableObject {
 
         if !archivedIDs.isEmpty {
             sessions.removeAll { archivedIDs.contains($0.id) }
+            let subtitle = locf(
+                archivedIDs.count == 1 ? "Archived %d session" : "Archived %d sessions",
+                archivedIDs.count)
             notifications.send(
-                subtitle: "Archived \(archivedIDs.count) session\(archivedIDs.count == 1 ? "" : "s")",
-                body: "Freed \(Formatters.byteString(freed)). Click to view.")
+                subtitle: subtitle,
+                body: locf("Freed %@. Click to view.", Formatters.byteString(freed)))
         }
     }
 
@@ -206,7 +211,7 @@ final class AppViewModel: ObservableObject {
             try archiver.archive(session)
             sessions.removeAll { $0.id == session.id }
         } catch {
-            notifications.send(subtitle: "Archive failed", body: error.localizedDescription)
+            notifications.send(subtitle: loc("Archive failed"), body: error.localizedDescription)
         }
     }
 
@@ -227,8 +232,8 @@ final class AppViewModel: ObservableObject {
 
     func parkActiveSession() {
         guard let active = activeSession else {
-            notifications.send(subtitle: "No active session",
-                               body: "There's no session to park right now.")
+            notifications.send(subtitle: loc("No active session"),
+                               body: loc("There's no session to park right now."))
             return
         }
         park(active)
@@ -340,6 +345,9 @@ final class AppViewModel: ObservableObject {
         if old.launchAtLogin != new.launchAtLogin && !suppressLoginReaction {
             applyLoginItem(new.launchAtLogin)
         }
+        if old.appLanguage != new.appLanguage {
+            Localizer.shared.language = new.appLanguage
+        }
         if old.proxyConfig.mode != new.proxyConfig.mode {
             handleProxyModeChange()
         } else if new.proxyConfig.mode == .manual
@@ -372,8 +380,8 @@ final class AppViewModel: ObservableObject {
         } catch {
             archiveDirectoryWritable = false
             autoArchivePausedUntil = .distantFuture
-            notifications.send(subtitle: "Archive paused",
-                               body: "Selected archive directory is not writable.")
+            notifications.send(subtitle: loc("Archive paused"),
+                               body: loc("Selected archive directory is not writable."))
         }
     }
 
@@ -389,7 +397,7 @@ final class AppViewModel: ObservableObject {
             suppressLoginReaction = true
             settings.launchAtLogin = !enabled   // 回滚
             suppressLoginReaction = false
-            notifications.send(subtitle: "Couldn't change login item",
+            notifications.send(subtitle: loc("Couldn't change login item"),
                                body: error.localizedDescription)
         }
     }
@@ -406,9 +414,9 @@ final class AppViewModel: ObservableObject {
             if stale && big {
                 maybeNotifyHygiene(
                     key: "stale-\(session.id)",
-                    subtitle: "Idle session",
-                    body: "\(session.projectName) has been idle 7+ days "
-                        + "(\(Formatters.byteString(session.sizeBytes))). Consider archiving.")
+                    subtitle: loc("Idle session"),
+                    body: locf("%@ has been idle 7+ days (%@). Consider archiving.",
+                               session.projectName, Formatters.byteString(session.sizeBytes)))
             }
         }
 
@@ -416,8 +424,8 @@ final class AppViewModel: ObservableObject {
         if let active = activeSession, let turns = active.estimatedTurns, turns > 60 {
             maybeNotifyHygiene(
                 key: "turns-\(active.id)",
-                subtitle: "Long session detected",
-                body: "\(active.projectName) has run 60+ turns. Consider Park & Restart.")
+                subtitle: loc("Long session detected"),
+                body: locf("%@ has run 60+ turns. Consider Park & Restart.", active.projectName))
         }
     }
 

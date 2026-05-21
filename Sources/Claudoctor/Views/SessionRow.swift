@@ -36,7 +36,7 @@ struct SessionRow: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
             Spacer(minLength: Spacing.sm)
-            Text("\(Formatters.byteString(session.sizeBytes)) · \(Formatters.relativeTime(from: session.modifiedAt))")
+            Text("\(Formatters.byteString(session.sizeBytes)) · \(Formatters.relativeTime(from: session.modifiedAt, language: Localizer.shared.effective))")
                 .font(.cdSubhead)
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
@@ -48,7 +48,7 @@ struct SessionRow: View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             HStack(spacing: Spacing.xs) {
                 if let turns = session.estimatedTurns {
-                    Text("\(turns) turns ·")
+                    Text("\(locf("%d turns", turns)) ·")
                         .font(.cdFootnote)
                         .foregroundStyle(.secondary)
                 }
@@ -64,7 +64,7 @@ struct SessionRow: View {
                     Button {
                         onPark(session)
                     } label: {
-                        Label("Park & Restart", systemImage: Symbols.park)
+                        Label(loc("Park & Restart"), systemImage: Symbols.park)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Park and restart \(session.projectName)")
@@ -72,7 +72,7 @@ struct SessionRow: View {
                 Button {
                     onArchive(session)
                 } label: {
-                    Label("Archive", systemImage: Symbols.archive)
+                    Label(loc("Archive"), systemImage: Symbols.archive)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Archive \(session.projectName)")
@@ -80,7 +80,7 @@ struct SessionRow: View {
                 Button {
                     onReveal(session)
                 } label: {
-                    Label("Reveal", systemImage: Symbols.reveal)
+                    Label(loc("Reveal"), systemImage: Symbols.reveal)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Reveal \(session.projectName) in Finder")

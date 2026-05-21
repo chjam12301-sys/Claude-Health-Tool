@@ -2,6 +2,8 @@ import SwiftUI
 
 /// 关于窗口 P-04（TechSpec §06.4）。
 struct AboutWindow: View {
+    @ObservedObject private var l10n = Localizer.shared
+
     var body: some View {
         VStack(spacing: Spacing.md) {
             Image(systemName: Symbols.menuBar)
@@ -11,17 +13,17 @@ struct AboutWindow: View {
 
             Text(AppInfo.name)
                 .font(.system(size: 24, weight: .medium))
-            Text("Version \(AppInfo.version)")
+            Text(locf("Version %@", AppInfo.version))
                 .font(.cdBody)
                 .foregroundStyle(.secondary)
-            Text(AppInfo.tagline)
+            Text(loc(AppInfo.tagline))
                 .font(.cdBody)
                 .multilineTextAlignment(.center)
 
             HStack(spacing: Spacing.lg) {
-                Link("GitHub", destination: AppInfo.githubURL)
-                Link("Report issue", destination: AppInfo.issuesURL)
-                Link("License", destination: AppInfo.licenseURL)
+                Link(loc("GitHub"), destination: AppInfo.githubURL)
+                Link(loc("Report issue"), destination: AppInfo.issuesURL)
+                Link(loc("License"), destination: AppInfo.licenseURL)
             }
             .font(.cdSubhead)
 

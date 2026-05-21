@@ -4,6 +4,7 @@ import SwiftUI
 /// 下拉面板 P-02（TechSpec §06.2）。
 struct MenuBarPanel: View {
     @ObservedObject var viewModel: AppViewModel
+    @ObservedObject private var l10n = Localizer.shared
     @Environment(\.openWindow) private var openWindow
     @State private var expandedID: String?
 
@@ -41,14 +42,14 @@ struct MenuBarPanel: View {
                     .font(.cdFootnote)
                     .foregroundStyle(.secondary)
             }
-            Text("\(viewModel.projectCount) project\(viewModel.projectCount == 1 ? "" : "s") · \(viewModel.bloatedCount) bloated")
+            Text(locf("%d projects · %d bloated", viewModel.projectCount, viewModel.bloatedCount))
                 .font(.cdSubhead)
                 .foregroundStyle(.secondary)
 
             proxyStatusRow
 
             if !viewModel.claudeCLIAvailable {
-                Label("Claude CLI not found in PATH", systemImage: "exclamationmark.triangle")
+                Label(loc("Claude CLI not found in PATH"), systemImage: "exclamationmark.triangle")
                     .font(.cdFootnote)
                     .foregroundStyle(.orange)
             }
@@ -81,11 +82,11 @@ struct MenuBarPanel: View {
     }
 
     private func proxyText(_ config: ProxyConfig) -> String {
-        if config.mode == .disabled { return "Proxy disabled" }
+        if config.mode == .disabled { return loc("Proxy disabled") }
         if config.lastTestStatus == .reachable, let ms = config.lastTestLatencyMs {
-            return "API: Reachable (\(ms)ms)"
+            return locf("API: Reachable (%dms)", ms)
         }
-        return "API: \(config.lastTestStatus.displayString)"
+        return locf("API: %@", loc(config.lastTestStatus.displayString))
     }
 
     // MARK: Content
@@ -107,7 +108,7 @@ struct MenuBarPanel: View {
 
     private func activeSessionCard(_ session: SessionInfo) -> some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("Active session")
+            Text(loc("Active session"))
                 .font(.cdHeadline)
                 .foregroundStyle(.secondary)
 
@@ -121,7 +122,7 @@ struct MenuBarPanel: View {
             ParkButton(
                 coordinator: viewModel.parkCoordinator,
                 enabled: viewModel.claudeCLIAvailable,
-                disabledReason: "Claude CLI not found"
+                disabledReason: loc("Claude CLI not found")
             ) {
                 viewModel.park(session)
             }
@@ -140,12 +141,12 @@ struct MenuBarPanel: View {
     private var allSessionsSection: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             HStack {
-                Text("All sessions")
+                Text(loc("All sessions"))
                     .font(.cdHeadline)
                     .foregroundStyle(.secondary)
                 Spacer()
                 if viewModel.hasBloated {
-                    Button("Archive all bloated") {
+                    Button(loc("Archive all bloated")) {
                         viewModel.archiveAllBloated()
                     }
                     .buttonStyle(.plain)
@@ -173,12 +174,12 @@ struct MenuBarPanel: View {
             Image(systemName: Symbols.menuBar)
                 .font(.system(size: 28))
                 .foregroundStyle(.secondary)
-            Text("No sessions yet")
+            Text(loc("No sessions yet"))
                 .font(.cdBody)
-            Text("Run `claude` in any project to start.")
+            Text(loc("Run `claude` in any project to start."))
                 .font(.cdSubhead)
                 .foregroundStyle(.secondary)
-            Link("Learn more", destination: AppInfo.claudeDocsURL)
+            Link(loc("Learn more"), destination: AppInfo.claudeDocsURL)
                 .font(.cdFootnote)
         }
         .frame(maxWidth: .infinity)
@@ -192,9 +193,9 @@ struct MenuBarPanel: View {
             Image(systemName: "questionmark.circle")
                 .font(.system(size: 28))
                 .foregroundStyle(.secondary)
-            Text("Claude Code not detected")
+            Text(loc("Claude Code not detected"))
                 .font(.cdBody)
-            Link("Install Claude Code", destination: AppInfo.claudeInstallURL)
+            Link(loc("Install Claude Code"), destination: AppInfo.claudeInstallURL)
                 .font(.cdSubhead)
         }
         .frame(maxWidth: .infinity)
@@ -205,21 +206,21 @@ struct MenuBarPanel: View {
 
     private var footer: some View {
         HStack {
-            Text("Auto-archive: \(viewModel.settings.autoArchiveEnabled ? "ON" : "OFF") · >\(viewModel.settings.bloatedThresholdMB) MB")
+            Text("\(loc("Auto-archive:")) \(viewModel.settings.autoArchiveEnabled ? loc("ON") : loc("OFF")) · >\(viewModel.settings.bloatedThresholdMB) MB")
                 .font(.cdSubhead)
                 .foregroundStyle(.secondary)
             Spacer()
-            Button("Settings") {
+            Button(loc("Settings")) {
                 openWindow(id: "settings")
                 NSApp.activate(ignoringOtherApps: true)
             }
             .buttonStyle(.plain)
-            Button("About") {
+            Button(loc("About")) {
                 openWindow(id: "about")
                 NSApp.activate(ignoringOtherApps: true)
             }
             .buttonStyle(.plain)
-            Button("Quit") {
+            Button(loc("Quit")) {
                 NSApp.terminate(nil)
             }
             .buttonStyle(.plain)

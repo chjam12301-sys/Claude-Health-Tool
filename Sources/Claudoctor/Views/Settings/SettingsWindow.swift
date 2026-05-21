@@ -4,6 +4,7 @@ import SwiftUI
 /// 设置窗口 P-03（TechSpec §06.3）。
 struct SettingsWindow: View {
     @ObservedObject var viewModel: AppViewModel
+    @ObservedObject private var l10n = Localizer.shared
     @Environment(\.dismiss) private var dismiss
 
     @State private var showResetConfirm = false
@@ -24,6 +25,7 @@ struct SettingsWindow: View {
                     onModeChanged: { _ in }   // 变更由 settings.didSet 统一处理（F5）
                 )
                 terminalSection
+                languageSection
                 startupSection
                 advancedSection
                 Divider()
@@ -33,17 +35,34 @@ struct SettingsWindow: View {
         }
         .frame(width: 480)
         .frame(minHeight: 520, maxHeight: 760)
-        .alert("Reset all settings to defaults?", isPresented: $showResetConfirm) {
-            Button("Reset", role: .destructive) { viewModel.resetSettings() }
-            Button("Cancel", role: .cancel) {}
+        .alert(loc("Reset all settings to defaults?"), isPresented: $showResetConfirm) {
+            Button(loc("Reset"), role: .destructive) { viewModel.resetSettings() }
+            Button(loc("Cancel"), role: .cancel) {}
         }
-        .alert("Skip pre-flight check?", isPresented: $showSkipPreflightWarning) {
-            Button("Continue", role: .destructive) {
+        .alert(loc("Skip pre-flight check?"), isPresented: $showSkipPreflightWarning) {
+            Button(loc("Continue"), role: .destructive) {
                 viewModel.settings.skipPreflightOnPark = true
             }
-            Button("Cancel", role: .cancel) {}
+            Button(loc("Cancel"), role: .cancel) {}
         } message: {
-            Text("Skipping pre-flight may corrupt sessions on network failure.")
+            Text(loc("Skipping pre-flight may corrupt sessions on network failure."))
+        }
+    }
+
+    // MARK: Language (V1)
+
+    private var languageSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            Text(loc("Language")).font(.cdHeadline)
+            Picker(loc("Language"), selection: settings.appLanguage) {
+                ForEach(AppLanguage.allCases) { language in
+                    Text(language == .system ? loc("System") : language.displayName)
+                        .tag(language)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.segmented)
+            .font(.cdBody)
         }
     }
 
@@ -51,15 +70,15 @@ struct SettingsWindow: View {
 
     private var thresholdsSection: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("Thresholds").font(.cdHeadline)
+            Text(loc("Thresholds")).font(.cdHeadline)
             ThresholdSlider(
-                label: "Warning",
+                label: loc("Warning"),
                 value: settings.warningThresholdMB,
                 range: AppSettings.warningThresholdRange,
                 onCommit: enforceGap
             )
             ThresholdSlider(
-                label: "Bloated",
+                label: loc("Bloated"),
                 value: settings.bloatedThresholdMB,
                 range: AppSettings.bloatedThresholdRange,
                 onCommit: enforceGap
@@ -79,24 +98,24 @@ struct SettingsWindow: View {
 
     private var autoArchiveSection: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("Auto-archive").font(.cdHeadline)
-            Toggle("Enable auto-archive", isOn: settings.autoArchiveEnabled)
+            Text(loc("Auto-archive")).font(.cdHeadline)
+            Toggle(loc("Enable auto-archive"), isOn: settings.autoArchiveEnabled)
                 .font(.cdBody)
             Stepper(
-                "Scan every: \(viewModel.settings.scanIntervalMinutes) minutes",
+                locf("Scan every: %d minutes", viewModel.settings.scanIntervalMinutes),
                 value: settings.scanIntervalMinutes,
                 in: AppSettings.scanIntervalRange
             )
             .font(.cdBody)
             HStack(spacing: Spacing.sm) {
-                Text("Archive to:").font(.cdBody)
+                Text(loc("Archive to:")).font(.cdBody)
                 Button(viewModel.settings.archiveDirectory.path, action: chooseArchiveDirectory)
                     .buttonStyle(.link)
                     .lineLimit(1)
                     .truncationMode(.middle)
             }
             if !viewModel.archiveDirectoryWritable {
-                Text("Directory not writable")
+                Text(loc("Directory not writable"))
                     .font(.cdFootnote)
                     .foregroundStyle(.red)
             }
@@ -107,12 +126,12 @@ struct SettingsWindow: View {
 
     private var terminalSection: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("Terminal").font(.cdHeadline)
-            Picker("Preferred", selection: settings.preferredTerminal) {
+            Text(loc("Terminal")).font(.cdHeadline)
+            Picker(loc("Preferred"), selection: settings.preferredTerminal) {
                 ForEach(TerminalApp.allCases) { terminal in
                     Text(terminal.isInstalled
                          ? terminal.displayName
-                         : "\(terminal.displayName) — not installed")
+                         : locf("%@ — not installed", terminal.displayName))
                         .tag(terminal)
                 }
             }
@@ -124,8 +143,8 @@ struct SettingsWindow: View {
 
     private var startupSection: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("Startup").font(.cdHeadline)
-            Toggle("Launch at login", isOn: settings.launchAtLogin)
+            Text(loc("Startup")).font(.cdHeadline)
+            Toggle(loc("Launch at login"), isOn: settings.launchAtLogin)
                 .font(.cdBody)
         }
     }
@@ -133,8 +152,8 @@ struct SettingsWindow: View {
     // MARK: Advanced (V1)
 
     private var advancedSection: some View {
-        DisclosureGroup("Advanced", isExpanded: $showAdvanced) {
-            Toggle("Skip pre-flight on Park", isOn: skipPreflightBinding)
+        DisclosureGroup(loc("Advanced"), isExpanded: $showAdvanced) {
+            Toggle(loc("Skip pre-flight on Park"), isOn: skipPreflightBinding)
                 .font(.cdBody)
                 .padding(.top, Spacing.xs)
         }
@@ -158,11 +177,11 @@ struct SettingsWindow: View {
 
     private var footer: some View {
         HStack {
-            Button("Reset to defaults", role: .destructive) {
+            Button(loc("Reset to defaults"), role: .destructive) {
                 showResetConfirm = true
             }
             Spacer()
-            Button("Done") { dismiss() }
+            Button(loc("Done")) { dismiss() }
                 .keyboardShortcut(.defaultAction)
         }
     }
