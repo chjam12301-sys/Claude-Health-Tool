@@ -8,94 +8,76 @@ struct TestResult {
     let errorDescription: String?
 }
 
-/// 用现成代理 URL 测 `api.anthropic.com`（TechSpec §09.8 / API-09 / BR-031，V1）。
+/// 用 `curl` 经代理探测 `api.anthropic.com` 可达性（TechSpec API-09 / BR-031，V1）。
+///
+/// 改用 curl 而非 URLSession：curl 的 `--proxy` 对 Clash/Surge 等本地代理最可靠，
+/// 而 URLSession 的 connectionProxyDictionary 在部分 macOS 版本上对 HTTPS CONNECT
+/// 隧道支持不稳定。
 final class ProxyTester {
 
-    static let probeURL = URL(string: "https://api.anthropic.com")!
+    static let probeURLString = "https://api.anthropic.com"
+    private static let curlURL = URL(fileURLWithPath: "/usr/bin/curl")
 
     /// 单次 reachability 测试。proxy = nil 表示直连。
     func test(
         via proxy: URL?,
         timeout: TimeInterval = AppSettings.proxyReachabilityTimeoutSec
     ) async -> TestResult {
-        let configuration: URLSessionConfiguration
+        var args = [
+            "--max-time", "\(Int(timeout))",
+            "-s", "-o", "/dev/null",
+            "-w", "%{http_code} %{time_total}"
+        ]
         if let proxy {
-            configuration = .withProxy(proxy)
+            args += ["--proxy", proxy.absoluteString]
         } else {
-            configuration = .ephemeral
+            args += ["--noproxy", "*"]   // disabled / 直连：忽略环境里的代理变量
         }
-        configuration.timeoutIntervalForRequest = timeout
-        configuration.timeoutIntervalForResource = timeout
-        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        args.append(Self.probeURLString)
 
-        let session = URLSession(configuration: configuration)
-        defer { session.invalidateAndCancel() }
+        guard let result = try? await ProcessRunner.run(
+            executableURL: Self.curlURL,
+            arguments: args,
+            timeout: timeout + 2
+        ) else {
+            return TestResult(status: .proxyNotResponding, httpCode: nil,
+                              latencyMs: nil, errorDescription: "curl failed to launch")
+        }
 
-        var request = URLRequest(url: Self.probeURL)
-        request.httpMethod = "GET"
+        if result.timedOut {
+            return TestResult(status: .timeout, httpCode: nil,
+                              latencyMs: nil, errorDescription: "timed out")
+        }
 
-        let start = Date()
-        do {
-            let (_, response) = try await session.data(for: request)
-            let latency = Int(Date().timeIntervalSince(start) * 1000)
-            guard let http = response as? HTTPURLResponse else {
-                return TestResult(status: .apiDown, httpCode: nil,
-                                  latencyMs: latency, errorDescription: "Non-HTTP response")
-            }
-            let code = http.statusCode
-            if AppSettings.reachableStatusCodes.contains(code) {
-                return TestResult(status: .reachable, httpCode: code,
-                                  latencyMs: latency, errorDescription: nil)
-            }
+        let fields = result.stdout
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .split(separator: " ")
+        let code = fields.first.flatMap { Int($0) } ?? 0
+        let latencyMs = fields.count > 1
+            ? Int((Double(fields[1]) ?? 0) * 1000)
+            : nil
+
+        if AppSettings.reachableStatusCodes.contains(code) {
+            return TestResult(status: .reachable, httpCode: code,
+                              latencyMs: latencyMs, errorDescription: nil)
+        }
+        if code != 0 {
+            // 到达了服务器但状态码不在白名单（含 5xx）
             return TestResult(status: .apiDown, httpCode: code,
-                              latencyMs: latency, errorDescription: "HTTP \(code)")
-        } catch {
-            let ns = error as NSError
-            return TestResult(status: Self.mapURLError(ns), httpCode: nil,
-                              latencyMs: nil, errorDescription: ns.localizedDescription)
+                              latencyMs: latencyMs, errorDescription: "HTTP \(code)")
         }
+        // code == 0：连接层失败，按 curl 退出码归类
+        return TestResult(status: Self.mapCurlExit(result.exitCode), httpCode: nil,
+                          latencyMs: nil, errorDescription: "curl exit \(result.exitCode)")
     }
 
-    /// 把 URLError code 映射到 TestStatus（API-09）。
-    static func mapURLError(_ error: NSError) -> TestStatus {
-        guard error.domain == NSURLErrorDomain else { return .proxyNotResponding }
-        switch error.code {
-        case NSURLErrorTimedOut:
-            return .timeout
-        case NSURLErrorCannotFindHost, NSURLErrorDNSLookupFailed:
-            return .dnsFailed
-        case NSURLErrorCannotConnectToHost, NSURLErrorNetworkConnectionLost,
-             NSURLErrorNotConnectedToInternet:
-            return .proxyNotResponding
-        default:
-            return .proxyNotResponding
+    /// curl 退出码 → TestStatus（man curl: 5/6 解析失败，7 连接失败，28 超时）。
+    static func mapCurlExit(_ exitCode: Int32) -> TestStatus {
+        switch exitCode {
+        case 28: return .timeout
+        case 7: return .proxyNotResponding      // failed to connect to host/proxy
+        case 5, 6: return .dnsFailed            // couldn't resolve proxy / host
+        default: return .proxyNotResponding
         }
-    }
-}
-
-extension URLSessionConfiguration {
-    /// 显式走代理的 ephemeral 配置（TechSpec §09.8）。
-    static func withProxy(_ proxy: URL) -> URLSessionConfiguration {
-        let config = URLSessionConfiguration.ephemeral
-        guard let host = proxy.host, let port = proxy.port else { return config }
-
-        let isSOCKS = (proxy.scheme?.lowercased() == "socks5")
-        if isSOCKS {
-            config.connectionProxyDictionary = [
-                "SOCKSEnable": 1,
-                "SOCKSProxy": host,
-                "SOCKSPort": port
-            ]
-        } else {
-            config.connectionProxyDictionary = [
-                "HTTPSEnable": 1,
-                "HTTPSProxy": host,
-                "HTTPSPort": port,
-                "HTTPEnable": 1,
-                "HTTPProxy": host,
-                "HTTPPort": port
-            ]
-        }
-        return config
     }
 }

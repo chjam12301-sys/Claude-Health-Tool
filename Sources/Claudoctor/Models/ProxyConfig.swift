@@ -25,7 +25,7 @@ enum TestStatus: String, Codable {
         case .proxyNotResponding: return "Proxy not responding"
         case .timeout: return "Connection timed out"
         case .dnsFailed: return "DNS resolution failed"
-        case .apiDown: return "API returns 5xx"
+        case .apiDown: return "Server returned 5xx"
         }
     }
 }

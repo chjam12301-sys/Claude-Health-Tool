@@ -161,6 +161,25 @@ struct HeroArt: View {
     }
 }
 
+/// 设置页分组卡片（cream 圆角容器）。
+struct SettingsCard<Content: View>: View {
+    private let content: Content
+    init(@ViewBuilder content: () -> Content) { self.content = content() }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            content
+        }
+        .padding(Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                .fill(Color.creamBg)
+                .overlay(RoundedRectangle(cornerRadius: Radius.lg).stroke(Color.cdBorder))
+        )
+    }
+}
+
 /// 面板里圆角图标按钮（footer 用）。
 struct IconButton: View {
     let symbol: String

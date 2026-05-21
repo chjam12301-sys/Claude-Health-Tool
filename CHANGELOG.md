@@ -44,6 +44,12 @@ Initial implementation of V0 + V1 per PRD / TechSpec.
   card with a size progress bar, card-style session rows, a sidebar-navigation
   Settings window, and a refreshed About window. Windows render in a fixed
   light appearance with coral accents.
+- Proxy reachability now tested via `curl --proxy` (reliable with Clash/Surge)
+  instead of `URLSession`, fixing detection behind a local proxy. Proxy tab
+  shows error type, tested ports, and a troubleshooting hint.
+- Renamed the connection labels from "API" to "Proxy/连接" — the status
+  reflects the proxy/VPN reachability, not the LLM API.
+- Settings panes restyled with grouped cream cards.
 
 ### Known deviations
 - Built and structured as a Swift Package (SPM). Use `build-app.sh` on a Mac to

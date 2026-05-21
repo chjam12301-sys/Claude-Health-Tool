@@ -141,7 +141,7 @@ extension Localizer {
         "Proxy not responding": "代理无响应",
         "Connection timed out": "连接超时",
         "DNS resolution failed": "DNS 解析失败",
-        "API returns 5xx": "API 返回 5xx",
+        "Server returned 5xx": "服务器返回 5xx",
 
         // 关于
         "Keeps your Claude Code sessions healthy.": "让你的 Claude Code 会话保持健康。",
@@ -209,7 +209,7 @@ extension Localizer {
         "%d project(s) all clear — keep it up.": "%d 个项目全部正常，继续保持哦",
         "Projects": "项目监控",
         "Largest": "最大会话",
-        "API latency": "API 延迟",
+        "Proxy latency": "代理延迟",
         "Current session": "当前会话",
         "Other sessions": "其他会话",
         "%d total": "共 %d 个",
@@ -226,13 +226,19 @@ extension Localizer {
         "Open terminal": "开终端",
 
         // 代理 tab
-        "API connection OK": "API 连接正常",
-        "API connection failed": "API 连接失败",
+        "Proxy connected": "代理连接正常",
+        "Proxy unreachable": "代理连接失败",
+        "Proxy not configured": "未配置代理",
         "Test now": "立即重测",
+        "Re-detect": "重新探测",
         "Mode": "模式",
         "Proxy URL": "代理 URL",
         "Last test": "最后测试",
+        "Error": "错误类型",
+        "Tested ports": "已测试端口",
         "Via proxy": "通过代理",
-        "Direct connection": "直连"
+        "Direct connection": "直连",
+        "Check that Clash / Surge is running, or switch to Manual mode in Settings.":
+            "检查 Clash / Surge 是否在运行，或在设置里切换到 Manual 模式手动填写代理。"
     ]
 }

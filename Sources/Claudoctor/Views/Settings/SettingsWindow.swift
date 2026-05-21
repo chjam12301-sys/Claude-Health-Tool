@@ -133,20 +133,22 @@ struct SettingsWindow: View {
     // MARK: Thresholds (BR-001/002/003)
 
     private var thresholdsSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             Text(loc("Thresholds")).font(.cdHeadline)
-            ThresholdSlider(
-                label: loc("Warning"),
-                value: settings.warningThresholdMB,
-                range: AppSettings.warningThresholdRange,
-                onCommit: enforceGap
-            )
-            ThresholdSlider(
-                label: loc("Bloated"),
-                value: settings.bloatedThresholdMB,
-                range: AppSettings.bloatedThresholdRange,
-                onCommit: enforceGap
-            )
+            SettingsCard {
+                ThresholdSlider(
+                    label: loc("Warning"),
+                    value: settings.warningThresholdMB,
+                    range: AppSettings.warningThresholdRange,
+                    onCommit: enforceGap
+                )
+                ThresholdSlider(
+                    label: loc("Bloated"),
+                    value: settings.bloatedThresholdMB,
+                    range: AppSettings.bloatedThresholdRange,
+                    onCommit: enforceGap
+                )
+            }
         }
     }
 
@@ -161,27 +163,29 @@ struct SettingsWindow: View {
     // MARK: Auto-archive
 
     private var autoArchiveSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             Text(loc("Auto-archive")).font(.cdHeadline)
-            Toggle(loc("Enable auto-archive"), isOn: settings.autoArchiveEnabled)
+            SettingsCard {
+                Toggle(loc("Enable auto-archive"), isOn: settings.autoArchiveEnabled)
+                    .font(.cdBody)
+                Stepper(
+                    locf("Scan every: %d minutes", viewModel.settings.scanIntervalMinutes),
+                    value: settings.scanIntervalMinutes,
+                    in: AppSettings.scanIntervalRange
+                )
                 .font(.cdBody)
-            Stepper(
-                locf("Scan every: %d minutes", viewModel.settings.scanIntervalMinutes),
-                value: settings.scanIntervalMinutes,
-                in: AppSettings.scanIntervalRange
-            )
-            .font(.cdBody)
-            HStack(spacing: Spacing.sm) {
-                Text(loc("Archive to:")).font(.cdBody)
-                Button(viewModel.settings.archiveDirectory.path, action: chooseArchiveDirectory)
-                    .buttonStyle(.link)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
-            if !viewModel.archiveDirectoryWritable {
-                Text(loc("Directory not writable"))
-                    .font(.cdFootnote)
-                    .foregroundStyle(.red)
+                HStack(spacing: Spacing.sm) {
+                    Text(loc("Archive to:")).font(.cdBody)
+                    Button(viewModel.settings.archiveDirectory.path, action: chooseArchiveDirectory)
+                        .buttonStyle(.link)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+                if !viewModel.archiveDirectoryWritable {
+                    Text(loc("Directory not writable"))
+                        .font(.cdFootnote)
+                        .foregroundStyle(.red)
+                }
             }
         }
     }
@@ -189,54 +193,62 @@ struct SettingsWindow: View {
     // MARK: Terminal
 
     private var terminalSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             Text(loc("Terminal")).font(.cdHeadline)
-            Picker(loc("Preferred"), selection: settings.preferredTerminal) {
-                ForEach(TerminalApp.allCases) { terminal in
-                    Text(terminal.isInstalled
-                         ? terminal.displayName
-                         : locf("%@ — not installed", terminal.displayName))
-                        .tag(terminal)
+            SettingsCard {
+                Picker(loc("Preferred"), selection: settings.preferredTerminal) {
+                    ForEach(TerminalApp.allCases) { terminal in
+                        Text(terminal.isInstalled
+                             ? terminal.displayName
+                             : locf("%@ — not installed", terminal.displayName))
+                            .tag(terminal)
+                    }
                 }
+                .font(.cdBody)
             }
-            .font(.cdBody)
         }
     }
 
     // MARK: Startup
 
     private var startupSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             Text(loc("Startup")).font(.cdHeadline)
-            Toggle(loc("Launch at login"), isOn: settings.launchAtLogin)
-                .font(.cdBody)
+            SettingsCard {
+                Toggle(loc("Launch at login"), isOn: settings.launchAtLogin)
+                    .font(.cdBody)
+            }
         }
     }
 
     // MARK: Language
 
     private var languageSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             Text(loc("Language")).font(.cdHeadline)
-            Picker(loc("Language"), selection: settings.appLanguage) {
-                ForEach(AppLanguage.allCases) { language in
-                    Text(language == .system ? loc("System") : language.displayName)
-                        .tag(language)
+            SettingsCard {
+                Picker(loc("Language"), selection: settings.appLanguage) {
+                    ForEach(AppLanguage.allCases) { language in
+                        Text(language == .system ? loc("System") : language.displayName)
+                            .tag(language)
+                    }
                 }
+                .labelsHidden()
+                .pickerStyle(.segmented)
+                .font(.cdBody)
             }
-            .labelsHidden()
-            .pickerStyle(.segmented)
-            .font(.cdBody)
         }
     }
 
     // MARK: Advanced
 
     private var advancedSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             Text(loc("Advanced")).font(.cdHeadline)
-            Toggle(loc("Skip pre-flight on Park"), isOn: skipPreflightBinding)
-                .font(.cdBody)
+            SettingsCard {
+                Toggle(loc("Skip pre-flight on Park"), isOn: skipPreflightBinding)
+                    .font(.cdBody)
+            }
         }
     }
 

@@ -121,7 +121,7 @@ struct MenuBarPanel: View {
             StatCard(value: "\(viewModel.projectCount)", label: loc("Projects"))
             StatCard(value: largestSessionString, label: loc("Largest"),
                      emphasized: viewModel.hasBloated)
-            StatCard(value: latencyValue, unit: latencyUnit, label: loc("API latency"))
+            StatCard(value: latencyValue, unit: latencyUnit, label: loc("Proxy latency"))
         }
         .padding(.horizontal, Spacing.lg)
         .padding(.bottom, Spacing.md)
@@ -336,19 +336,40 @@ struct MenuBarPanel: View {
 
     // MARK: - Proxy tab
 
+    private enum ProxyViz { case connected, failed, neutral }
+
+    private func proxyViz(_ config: ProxyConfig) -> ProxyViz {
+        if config.mode == .disabled { return .neutral }
+        switch config.lastTestStatus {
+        case .reachable: return .connected
+        case .notTested: return .neutral
+        default: return .failed
+        }
+    }
+
     private var proxyTab: some View {
         let config = viewModel.settings.proxyConfig
-        let ok = config.lastTestStatus == .reachable
+        let viz = proxyViz(config)
         return VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    proxyHero(config: config, ok: ok)
-                    proxyDetailCard(config: config)
+                    proxyHero(config: config, viz: viz)
+                    proxyDetailCard(config: config, viz: viz)
+                    if viz == .failed {
+                        Text(loc("Check that Clash / Surge is running, or switch to Manual mode in Settings."))
+                            .font(.cdFootnote)
+                            .foregroundStyle(.primary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(Spacing.md)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(RoundedRectangle(cornerRadius: Radius.md).fill(Color.coralBg))
+                            .padding(.horizontal, Spacing.lg)
+                            .padding(.bottom, Spacing.md)
+                    }
                     HStack(spacing: Spacing.sm) {
-                        Button {
-                            Task { _ = await viewModel.testConnection() }
-                        } label: {
-                            Label(loc("Test now"), systemImage: Symbols.retest)
+                        Button(action: runProxyAction) {
+                            Label(config.mode == .autoDetect ? loc("Re-detect") : loc("Test now"),
+                                  systemImage: config.mode == .autoDetect ? Symbols.rescan : Symbols.retest)
                                 .font(.cdBody).frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
@@ -371,37 +392,67 @@ struct MenuBarPanel: View {
         }
     }
 
-    private func proxyHero(config: ProxyConfig, ok: Bool) -> some View {
-        HStack(spacing: Spacing.md) {
+    private func runProxyAction() {
+        if viewModel.settings.proxyConfig.mode == .autoDetect {
+            Task { await viewModel.runProxyAutoDetect() }
+        } else {
+            Task { _ = await viewModel.testConnection() }
+        }
+    }
+
+    private func proxyHero(config: ProxyConfig, viz: ProxyViz) -> some View {
+        let icon: String
+        let iconColor: Color
+        let title: String
+        let colors: [Color]
+        switch viz {
+        case .connected:
+            icon = Symbols.proxyOK; iconColor = .statusHealthy
+            title = loc("Proxy connected")
+            colors = [Color.infoBg, Color(hex: 0xDFE9F5)]
+        case .failed:
+            icon = Symbols.proxyFail; iconColor = .statusBloated
+            title = loc("Proxy unreachable")
+            colors = [Color.statusBloatedBg, Color(hex: 0xF8D9D2)]
+        case .neutral:
+            icon = "shield"; iconColor = .textTertiary
+            title = config.mode == .disabled ? loc("Proxy disabled") : loc("Proxy not configured")
+            colors = [Color.creamCard, Color.creamWarm]
+        }
+        return HStack(spacing: Spacing.md) {
             ZStack {
                 RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
                     .fill(Color.panelWhite)
                     .frame(width: 48, height: 48)
                     .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
-                Image(systemName: ok ? Symbols.proxyOK : Symbols.proxyFail)
-                    .font(.system(size: 22))
-                    .foregroundStyle(ok ? Color.statusHealthy : Color.statusBloated)
+                Image(systemName: icon).font(.system(size: 22)).foregroundStyle(iconColor)
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text(ok ? loc("API connection OK") : loc("API connection failed"))
-                    .font(.cdHero).fixedSize()
-                Text(proxySubtitle(config: config, ok: ok))
+                Text(title).font(.cdHero).fixedSize()
+                Text(proxySubtitle(config: config, viz: viz))
                     .font(.cdSubhead).foregroundStyle(.secondary)
             }
             Spacer(minLength: 0)
         }
         .padding(Spacing.lg)
-        .background(LinearGradient(
-            colors: ok ? [Color.infoBg, Color(hex: 0xDFE9F5)] : [Color.statusBloatedBg, Color(hex: 0xF8D9D2)],
-            startPoint: .topLeading, endPoint: .bottomTrailing))
+        .background(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing))
     }
 
-    private func proxyDetailCard(config: ProxyConfig) -> some View {
-        VStack(spacing: 0) {
+    private func proxyDetailCard(config: ProxyConfig, viz: ProxyViz) -> some View {
+        let autoFail = config.mode == .autoDetect && viz == .failed
+        return VStack(spacing: 0) {
             detailRow(loc("Mode"), proxyModeText(config.mode))
-            detailRow(loc("Proxy URL"), config.effectiveURL?.absoluteString ?? "—")
+            if autoFail {
+                detailRow(loc("Tested ports"),
+                          AppSettings.commonProxyPorts.map(String.init).joined(separator: " · "))
+            } else {
+                detailRow(loc("Proxy URL"), config.effectiveURL?.absoluteString ?? "—")
+            }
             detailRow(loc("Last test"),
                       config.lastTestedAt.map { Formatters.relativeTime(from: $0, language: l10n.effective) } ?? "—")
+            if viz == .failed {
+                detailRow(loc("Error"), loc(config.lastTestStatus.displayString), valueColor: .statusBloated)
+            }
         }
         .padding(.horizontal, Spacing.md)
         .padding(.vertical, Spacing.xs)
@@ -410,11 +461,11 @@ struct MenuBarPanel: View {
         .padding(.vertical, Spacing.md)
     }
 
-    private func detailRow(_ label: String, _ value: String) -> some View {
+    private func detailRow(_ label: String, _ value: String, valueColor: Color = .textPrimary) -> some View {
         HStack {
             Text(label).font(.cdSubhead).foregroundStyle(.secondary)
             Spacer()
-            Text(value).font(.cdMono).foregroundStyle(.primary).lineLimit(1)
+            Text(value).font(.cdMono).foregroundStyle(valueColor).lineLimit(1)
         }
         .padding(.vertical, Spacing.sm)
         .overlay(alignment: .bottom) { Rectangle().fill(Color.cdBorder).frame(height: 1) }
@@ -516,13 +567,16 @@ struct MenuBarPanel: View {
         }
     }
 
-    private func proxySubtitle(config: ProxyConfig, ok: Bool) -> String {
-        if ok {
+    private func proxySubtitle(config: ProxyConfig, viz: ProxyViz) -> String {
+        switch viz {
+        case .connected:
             let via = config.effectiveURL != nil ? loc("Via proxy") : loc("Direct connection")
             if let ms = config.lastTestLatencyMs { return "\(via) · \(ms)ms" }
             return via
+        case .failed:
+            return loc(config.lastTestStatus.displayString)
+        case .neutral:
+            return config.mode == .disabled ? loc("Direct connection") : loc("Not tested yet")
         }
-        if config.mode == .disabled { return loc("Proxy disabled") }
-        return loc(config.lastTestStatus.displayString)
     }
 }
