@@ -49,7 +49,7 @@ struct StatCard: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, Spacing.md)
+        .padding(.vertical, Spacing.sm)
         .background(
             RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                 .fill(Color.creamBg)
@@ -135,6 +135,7 @@ struct ClaudeMark: View {
 struct HeroArt: View {
     let tint: Color
     var spinning: Bool = false
+    var size: CGFloat = 56
     @State private var angle: Double = 0
 
     var body: some View {
@@ -142,15 +143,15 @@ struct HeroArt: View {
             Circle()
                 .fill(RadialGradient(
                     colors: [tint.opacity(0.18), tint.opacity(0)],
-                    center: .center, startRadius: 2, endRadius: 40))
-                .frame(width: 80, height: 80)
+                    center: .center, startRadius: 2, endRadius: size / 2))
+                .frame(width: size, height: size)
             Circle()
                 .fill(tint.opacity(0.12))
-                .frame(width: 60, height: 60)
-            ClaudeMark(color: tint, dotColor: .textPrimary, size: 38)
+                .frame(width: size * 0.74, height: size * 0.74)
+            ClaudeMark(color: tint, dotColor: .textPrimary, size: size * 0.48)
                 .rotationEffect(.degrees(spinning ? angle : 0))
         }
-        .frame(width: 80, height: 80)
+        .frame(width: size, height: size)
         .onAppear {
             guard spinning else { return }
             withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {

@@ -27,8 +27,8 @@ struct MenuBarPanel: View {
                 }
             }
         }
-        .frame(width: 420)
-        .frame(maxHeight: 640)
+        .frame(width: 400)
+        .frame(maxHeight: 760)
         .background(Color.panelWhite)
         .preferredColorScheme(.light)
     }
@@ -90,30 +90,30 @@ struct MenuBarPanel: View {
                 }
                 .padding(.bottom, Spacing.sm)
             }
-            .frame(maxHeight: 480)
+            .frame(maxHeight: 620)
             healthFooter
         }
     }
 
     private var hero: some View {
         let bloated = viewModel.hasBloated
-        return HStack(spacing: Spacing.lg) {
-            HeroArt(tint: bloated ? .coral : .statusHealthy)
-            VStack(alignment: .leading, spacing: Spacing.xs) {
+        return HStack(spacing: Spacing.md) {
+            HeroArt(tint: bloated ? .coral : .statusHealthy, size: 52)
+            VStack(alignment: .leading, spacing: 2) {
                 Text(bloated ? loc("Time to Park") : loc("Your Claude is healthy"))
                     .font(.cdHero)
                 Text(bloated
                      ? locf("%d session(s) too heavy — archive before starting fresh.", viewModel.bloatedCount)
                      : locf("%d project(s) all clear — keep it up.", viewModel.projectCount))
-                    .font(.cdBody)
+                    .font(.cdSubhead)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, Spacing.xl)
-        .padding(.top, Spacing.xl)
-        .padding(.bottom, Spacing.lg)
+        .padding(.horizontal, Spacing.lg)
+        .padding(.top, Spacing.lg)
+        .padding(.bottom, Spacing.md)
     }
 
     private var statsRow: some View {
@@ -123,8 +123,8 @@ struct MenuBarPanel: View {
                      emphasized: viewModel.hasBloated)
             StatCard(value: latencyValue, unit: latencyUnit, label: loc("API latency"))
         }
-        .padding(.horizontal, Spacing.xl)
-        .padding(.bottom, Spacing.lg)
+        .padding(.horizontal, Spacing.lg)
+        .padding(.bottom, Spacing.md)
     }
 
     private func sectionHeading(_ symbol: String, _ title: String, trailing: String? = nil) -> some View {
@@ -139,17 +139,17 @@ struct MenuBarPanel: View {
                 Text(trailing).font(.cdSubhead).foregroundStyle(Color.coralDark)
             }
         }
-        .padding(.horizontal, Spacing.xl)
-        .padding(.bottom, Spacing.sm)
+        .padding(.horizontal, Spacing.lg)
+        .padding(.bottom, Spacing.xs)
     }
 
     // MARK: Active card
 
     private func activeCard(_ session: SessionInfo) -> some View {
         let status = session.healthStatus
-        return VStack(alignment: .leading, spacing: Spacing.md) {
+        return VStack(alignment: .leading, spacing: Spacing.sm) {
             HStack(spacing: Spacing.sm) {
-                ProjectIcon(name: session.projectName, tint: status.color, size: 36)
+                ProjectIcon(name: session.projectName, tint: status.color, size: 32)
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: Spacing.xs) {
                         Text(session.projectName).font(.cdTitle).lineLimit(1)
@@ -194,7 +194,7 @@ struct MenuBarPanel: View {
                 .tint(.coral)
             }
         }
-        .padding(Spacing.lg)
+        .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
                 .fill(LinearGradient(
@@ -206,8 +206,8 @@ struct MenuBarPanel: View {
                     RoundedRectangle(cornerRadius: Radius.lg)
                         .stroke(status.color.opacity(0.18)))
         )
-        .padding(.horizontal, Spacing.xl)
-        .padding(.bottom, Spacing.lg)
+        .padding(.horizontal, Spacing.lg)
+        .padding(.bottom, Spacing.md)
     }
 
     // MARK: Other sessions
@@ -218,9 +218,9 @@ struct MenuBarPanel: View {
         return Group {
             if !others.isEmpty {
                 sectionHeading(Symbols.list, loc("Other sessions"),
-                               trailing: others.count > 6 ? locf("%d total", others.count) : nil)
+                               trailing: locf("%d total", others.count))
                 VStack(spacing: Spacing.xs) {
-                    ForEach(others.prefix(6)) { session in
+                    ForEach(others) { session in
                         SessionRow(
                             session: session,
                             expandedID: $expandedID,
@@ -229,7 +229,7 @@ struct MenuBarPanel: View {
                         )
                     }
                 }
-                .padding(.horizontal, Spacing.xl)
+                .padding(.horizontal, Spacing.lg)
             }
         }
     }
@@ -238,20 +238,20 @@ struct MenuBarPanel: View {
 
     private var parkingView: some View {
         VStack(spacing: 0) {
-            HStack(spacing: Spacing.lg) {
-                HeroArt(tint: .coral, spinning: true)
-                VStack(alignment: .leading, spacing: Spacing.xs) {
+            HStack(spacing: Spacing.md) {
+                HeroArt(tint: .coral, spinning: true, size: 52)
+                VStack(alignment: .leading, spacing: 2) {
                     Text(loc("Parking…")).font(.cdHero)
                     Text(loc("Generating your handoff, just a few seconds."))
-                        .font(.cdBody).foregroundStyle(.secondary)
+                        .font(.cdSubhead).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, Spacing.xl).padding(.vertical, Spacing.xl)
+            .padding(.horizontal, Spacing.lg).padding(.vertical, Spacing.lg)
 
             parkStateCard
-                .padding(.horizontal, Spacing.xl)
+                .padding(.horizontal, Spacing.lg)
                 .padding(.bottom, Spacing.lg)
         }
     }
@@ -362,24 +362,24 @@ struct MenuBarPanel: View {
                         .controlSize(.large)
                         .tint(.coral)
                     }
-                    .padding(.horizontal, Spacing.xl)
+                    .padding(.horizontal, Spacing.lg)
                     .padding(.bottom, Spacing.lg)
                 }
             }
-            .frame(maxHeight: 480)
+            .frame(maxHeight: 620)
             healthFooter
         }
     }
 
     private func proxyHero(config: ProxyConfig, ok: Bool) -> some View {
-        HStack(spacing: Spacing.lg) {
+        HStack(spacing: Spacing.md) {
             ZStack {
-                RoundedRectangle(cornerRadius: Radius.xl, style: .continuous)
+                RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
                     .fill(Color.panelWhite)
-                    .frame(width: 56, height: 56)
+                    .frame(width: 48, height: 48)
                     .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
                 Image(systemName: ok ? Symbols.proxyOK : Symbols.proxyFail)
-                    .font(.system(size: 26))
+                    .font(.system(size: 22))
                     .foregroundStyle(ok ? Color.statusHealthy : Color.statusBloated)
             }
             VStack(alignment: .leading, spacing: 2) {
@@ -390,7 +390,7 @@ struct MenuBarPanel: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(Spacing.xl)
+        .padding(Spacing.lg)
         .background(LinearGradient(
             colors: ok ? [Color.infoBg, Color(hex: 0xDFE9F5)] : [Color.statusBloatedBg, Color(hex: 0xF8D9D2)],
             startPoint: .topLeading, endPoint: .bottomTrailing))
@@ -403,10 +403,11 @@ struct MenuBarPanel: View {
             detailRow(loc("Last test"),
                       config.lastTestedAt.map { Formatters.relativeTime(from: $0, language: l10n.effective) } ?? "—")
         }
-        .padding(Spacing.lg)
+        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, Spacing.xs)
         .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Color.creamBg))
-        .padding(.horizontal, Spacing.xl)
-        .padding(.vertical, Spacing.lg)
+        .padding(.horizontal, Spacing.lg)
+        .padding(.vertical, Spacing.md)
     }
 
     private func detailRow(_ label: String, _ value: String) -> some View {

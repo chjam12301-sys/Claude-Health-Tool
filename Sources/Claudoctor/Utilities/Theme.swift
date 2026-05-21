@@ -73,7 +73,7 @@ enum Radius {
 // MARK: - Fonts
 
 extension Font {
-    static let cdHero = Font.system(size: 20, weight: .semibold)
+    static let cdHero = Font.system(size: 17, weight: .semibold)
     static let cdTitle = Font.system(size: 14, weight: .semibold)
     static let cdHeadline = Font.system(size: 13, weight: .semibold)
     static let cdBody = Font.system(size: 13, weight: .regular)
