@@ -1,41 +1,62 @@
 import AppKit
 import SwiftUI
 
-/// 设置窗口 P-03（TechSpec §06.3）。
+/// 设置窗口 P-03（UI Design v2：左侧栏导航）。
 struct SettingsWindow: View {
     @ObservedObject var viewModel: AppViewModel
     @ObservedObject private var l10n = Localizer.shared
     @Environment(\.dismiss) private var dismiss
 
+    @State private var selectedPane: SettingsPane = .thresholds
     @State private var showResetConfirm = false
-    @State private var showAdvanced = false
     @State private var showSkipPreflightWarning = false
 
     private var settings: Binding<AppSettings> { $viewModel.settings }
 
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.lg) {
-                thresholdsSection
-                autoArchiveSection
-                ProxySettingsSection(
-                    config: settings.proxyConfig,
-                    injectToTerminal: settings.injectProxyToTerminal,
-                    onTest: { await viewModel.testConnection() },
-                    onModeChanged: { _ in }   // 变更由 settings.didSet 统一处理（F5）
-                )
-                terminalSection
-                languageSection
-                startupSection
-                advancedSection
-                Divider()
-                footer
+    enum SettingsPane: CaseIterable {
+        case thresholds, autoArchive, proxy, terminal, startup, language, advanced
+
+        var title: String {
+            switch self {
+            case .thresholds: return "Thresholds"
+            case .autoArchive: return "Auto-archive"
+            case .proxy: return "Proxy"
+            case .terminal: return "Terminal"
+            case .startup: return "Startup"
+            case .language: return "Language"
+            case .advanced: return "Advanced"
             }
-            .padding(Spacing.xl)
         }
-        .frame(width: 480)
-        .frame(minHeight: 520, maxHeight: 760)
-        .background(Color.creamBg)
+
+        var icon: String {
+            switch self {
+            case .thresholds: return "slider.horizontal.3"
+            case .autoArchive: return "archivebox"
+            case .proxy: return "shield"
+            case .terminal: return "terminal"
+            case .startup: return "power"
+            case .language: return "globe"
+            case .advanced: return "wrench.and.screwdriver"
+            }
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                sidebar
+                Divider()
+                ScrollView {
+                    content
+                        .padding(Spacing.xl)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .background(Color.panelWhite)
+            }
+            Divider()
+            footer
+        }
+        .frame(width: 640, height: 560)
         .tint(.coral)
         .preferredColorScheme(.light)
         .alert(loc("Reset all settings to defaults?"), isPresented: $showResetConfirm) {
@@ -52,27 +73,67 @@ struct SettingsWindow: View {
         }
     }
 
-    // MARK: Language (V1)
+    // MARK: Sidebar
 
-    private var languageSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text(loc("Language")).font(.cdHeadline)
-            Picker(loc("Language"), selection: settings.appLanguage) {
-                ForEach(AppLanguage.allCases) { language in
-                    Text(language == .system ? loc("System") : language.displayName)
-                        .tag(language)
-                }
+    private var sidebar: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            ForEach(SettingsPane.allCases, id: \.self) { pane in
+                sidebarItem(pane)
             }
-            .labelsHidden()
-            .pickerStyle(.segmented)
-            .font(.cdBody)
+            Spacer()
+        }
+        .padding(Spacing.sm)
+        .frame(width: 168)
+        .frame(maxHeight: .infinity, alignment: .top)
+        .background(Color.creamBg)
+    }
+
+    private func sidebarItem(_ pane: SettingsPane) -> some View {
+        let selected = selectedPane == pane
+        return Button {
+            selectedPane = pane
+        } label: {
+            HStack(spacing: Spacing.sm) {
+                Image(systemName: pane.icon).frame(width: 16)
+                Text(loc(pane.title)).font(.cdBody)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.sm)
+            .foregroundStyle(selected ? Color.white : Color.textPrimary)
+            .background(
+                RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+                    .fill(selected ? Color.coral : Color.clear))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: Content panes
+
+    @ViewBuilder
+    private var content: some View {
+        switch selectedPane {
+        case .thresholds: thresholdsSection
+        case .autoArchive: autoArchiveSection
+        case .proxy:
+            ProxySettingsSection(
+                config: settings.proxyConfig,
+                injectToTerminal: settings.injectProxyToTerminal,
+                onTest: { await viewModel.testConnection() },
+                onModeChanged: { _ in }
+            )
+        case .terminal: terminalSection
+        case .startup: startupSection
+        case .language: languageSection
+        case .advanced: advancedSection
         }
     }
 
     // MARK: Thresholds (BR-001/002/003)
 
     private var thresholdsSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
             Text(loc("Thresholds")).font(.cdHeadline)
             ThresholdSlider(
                 label: loc("Warning"),
@@ -100,7 +161,7 @@ struct SettingsWindow: View {
     // MARK: Auto-archive
 
     private var autoArchiveSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
             Text(loc("Auto-archive")).font(.cdHeadline)
             Toggle(loc("Enable auto-archive"), isOn: settings.autoArchiveEnabled)
                 .font(.cdBody)
@@ -125,10 +186,10 @@ struct SettingsWindow: View {
         }
     }
 
-    // MARK: Terminal (V1)
+    // MARK: Terminal
 
     private var terminalSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
             Text(loc("Terminal")).font(.cdHeadline)
             Picker(loc("Preferred"), selection: settings.preferredTerminal) {
                 ForEach(TerminalApp.allCases) { terminal in
@@ -142,25 +203,41 @@ struct SettingsWindow: View {
         }
     }
 
-    // MARK: Startup (V1)
+    // MARK: Startup
 
     private var startupSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
             Text(loc("Startup")).font(.cdHeadline)
             Toggle(loc("Launch at login"), isOn: settings.launchAtLogin)
                 .font(.cdBody)
         }
     }
 
-    // MARK: Advanced (V1)
+    // MARK: Language
+
+    private var languageSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            Text(loc("Language")).font(.cdHeadline)
+            Picker(loc("Language"), selection: settings.appLanguage) {
+                ForEach(AppLanguage.allCases) { language in
+                    Text(language == .system ? loc("System") : language.displayName)
+                        .tag(language)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.segmented)
+            .font(.cdBody)
+        }
+    }
+
+    // MARK: Advanced
 
     private var advancedSection: some View {
-        DisclosureGroup(loc("Advanced"), isExpanded: $showAdvanced) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            Text(loc("Advanced")).font(.cdHeadline)
             Toggle(loc("Skip pre-flight on Park"), isOn: skipPreflightBinding)
                 .font(.cdBody)
-                .padding(.top, Spacing.xs)
         }
-        .font(.cdHeadline)
     }
 
     private var skipPreflightBinding: Binding<Bool> {
@@ -168,7 +245,7 @@ struct SettingsWindow: View {
             get: { viewModel.settings.skipPreflightOnPark },
             set: { newValue in
                 if newValue {
-                    showSkipPreflightWarning = true   // 确认后才真正生效
+                    showSkipPreflightWarning = true
                 } else {
                     viewModel.settings.skipPreflightOnPark = false
                 }
@@ -180,13 +257,25 @@ struct SettingsWindow: View {
 
     private var footer: some View {
         HStack {
-            Button(loc("Reset to defaults"), role: .destructive) {
+            Button(role: .destructive) {
                 showResetConfirm = true
+            } label: {
+                Label(loc("Reset to defaults"), systemImage: "arrow.counterclockwise")
+                    .font(.cdSubhead)
             }
+            .buttonStyle(.plain)
+            .foregroundStyle(Color.statusBloated)
+
             Spacer()
+
             Button(loc("Done")) { dismiss() }
+                .buttonStyle(.borderedProminent)
+                .tint(.coral)
                 .keyboardShortcut(.defaultAction)
         }
+        .padding(.horizontal, Spacing.xl)
+        .padding(.vertical, Spacing.md)
+        .background(Color.creamCard)
     }
 
     private func chooseArchiveDirectory() {

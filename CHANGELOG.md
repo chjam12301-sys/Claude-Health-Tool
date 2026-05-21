@@ -41,8 +41,9 @@ Initial implementation of V0 + V1 per PRD / TechSpec.
   `claude --dangerously-skip-permissions` to skip every permission prompt.
 - UI Design v2: Claude-native warm coral/cream palette, tabbed panel
   (Session health / Proxy status), hero area, stat cards, redesigned active
-  card with a size progress bar, card-style session rows, and a refreshed
-  About window. Windows render in a fixed light appearance with coral accents.
+  card with a size progress bar, card-style session rows, a sidebar-navigation
+  Settings window, and a refreshed About window. Windows render in a fixed
+  light appearance with coral accents.
 
 ### Known deviations
 - Built and structured as a Swift Package (SPM). Use `build-app.sh` on a Mac to
