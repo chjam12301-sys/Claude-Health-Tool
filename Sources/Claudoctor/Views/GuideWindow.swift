@@ -30,6 +30,9 @@ struct GuideWindow: View {
         }
         .frame(width: 440)
         .frame(minHeight: 420, maxHeight: 560)
+        .background(Color.creamBg)
+        .tint(.coral)
+        .preferredColorScheme(.light)
     }
 
     private func row(icon: String, title: String, body: String) -> some View {

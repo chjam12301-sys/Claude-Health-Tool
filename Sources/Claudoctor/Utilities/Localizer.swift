@@ -197,6 +197,42 @@ extension Localizer {
         "Same as Park & Restart, but the new session starts with claude --dangerously-skip-permissions, skipping every permission prompt. Use with care.":
             "和暂存并重启一样，但新会话用 claude --dangerously-skip-permissions 启动，跳过所有权限确认。请谨慎使用。",
         "Auto-detect or set a proxy, with a pre-flight network check before parking so a network failure never costs you a session.":
-            "自动检测或手动配置代理，并在暂存前做网络预检——网络故障也不会让你丢失会话。"
+            "自动检测或手动配置代理，并在暂存前做网络预检——网络故障也不会让你丢失会话。",
+
+        // 面板 v2：tab / hero / 统计 / 分区
+        "Session health": "会话健康",
+        "Proxy status": "代理状态",
+        "Time to Park": "需要 Park 一下",
+        "%d session(s) too heavy — archive before starting fresh.":
+            "有 %d 个会话过肥了，建议先归档再开新会话",
+        "Your Claude is healthy": "你的 Claude 很健康",
+        "%d project(s) all clear — keep it up.": "%d 个项目全部正常，继续保持哦",
+        "Projects": "项目监控",
+        "Largest": "最大会话",
+        "API latency": "API 延迟",
+        "Current session": "当前会话",
+        "Other sessions": "其他会话",
+        "%d total": "共 %d 个",
+        "%d MB · limit": "%d MB · 警戒线",
+        "~%d turns": "~%d 轮",
+        "Open Claude Code": "打开 Claude Code",
+        "No projects monitored": "未监控任何项目",
+
+        // Park 流程步骤
+        "Parking…": "Parking 中…",
+        "Generating your handoff, just a few seconds.": "正在生成 handoff 笔记，稍候几秒就好",
+        "Pre-flight": "预检",
+        "Handoff": "Handoff",
+        "Open terminal": "开终端",
+
+        // 代理 tab
+        "API connection OK": "API 连接正常",
+        "API connection failed": "API 连接失败",
+        "Test now": "立即重测",
+        "Mode": "模式",
+        "Proxy URL": "代理 URL",
+        "Last test": "最后测试",
+        "Via proxy": "通过代理",
+        "Direct connection": "直连"
     ]
 }

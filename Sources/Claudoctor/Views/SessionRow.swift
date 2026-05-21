@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 单个 session 行（TechSpec §07.1）。可展开显示操作按钮。
+/// 单个 session 卡片行（UI Design v2）。点按展开操作按钮。
 struct SessionRow: View {
     let session: SessionInfo
     @Binding var expandedID: String?
@@ -8,87 +8,80 @@ struct SessionRow: View {
     let onReveal: (SessionInfo) -> Void
     var onPark: ((SessionInfo) -> Void)?
 
+    @ObservedObject private var l10n = Localizer.shared
+
     private var isExpanded: Bool { expandedID == session.id }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            Button(action: toggle) {
-                header
-            }
-            .buttonStyle(.plain)
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            Button(action: toggle) { row }
+                .buttonStyle(.plain)
 
             if isExpanded {
-                expanded
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                expanded.transition(.opacity)
             }
         }
-        .padding(.vertical, Spacing.xs)
+        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, Spacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+                .fill(Color.creamBg)
+        )
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityLabel)
     }
 
-    private var header: some View {
+    private var row: some View {
         HStack(spacing: Spacing.sm) {
-            StatusBadge(status: session.healthStatus)
-            Text(session.projectName)
-                .font(.cdBody)
-                .lineLimit(1)
-                .truncationMode(.middle)
+            Circle()
+                .fill(session.healthStatus.color)
+                .frame(width: 8, height: 8)
+            ProjectIcon(name: session.projectName, tint: session.healthStatus.color, size: 28)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(session.projectName)
+                    .font(.cdBody)
+                    .foregroundStyle(session.healthStatus == .healthy ? Color.textPrimary : Color.textPrimary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                Text(Formatters.relativeTime(from: session.modifiedAt, language: l10n.effective))
+                    .font(.cdFootnote)
+                    .foregroundStyle(.secondary)
+            }
             Spacer(minLength: Spacing.sm)
-            Text("\(Formatters.byteString(session.sizeBytes)) · \(Formatters.relativeTime(from: session.modifiedAt, language: Localizer.shared.effective))")
-                .font(.cdSubhead)
-                .foregroundStyle(.secondary)
+            Text(Formatters.byteString(session.sizeBytes))
+                .font(.system(size: 13, weight: .semibold))
                 .monospacedDigit()
+                .foregroundStyle(session.healthStatus == .healthy ? Color.textPrimary : session.healthStatus.color)
         }
-        .frame(minHeight: 24)
     }
 
     private var expanded: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            HStack(spacing: Spacing.xs) {
-                if let turns = session.estimatedTurns {
-                    Text("\(locf("%d turns", turns)) ·")
-                        .font(.cdFootnote)
-                        .foregroundStyle(.secondary)
-                }
-                Text(session.projectPath)
-                    .font(.cdFootnote)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
+            Text(session.projectPath)
+                .font(.cdFootnote)
+                .foregroundStyle(.tertiary)
+                .lineLimit(1)
+                .truncationMode(.middle)
 
-            HStack(spacing: Spacing.md) {
+            HStack(spacing: Spacing.sm) {
                 if let onPark {
-                    Button {
-                        onPark(session)
-                    } label: {
-                        Label(loc("Park & Restart"), systemImage: Symbols.park)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Park and restart \(session.projectName)")
+                    rowButton(loc("Park & Restart"), Symbols.park) { onPark(session) }
                 }
-                Button {
-                    onArchive(session)
-                } label: {
-                    Label(loc("Archive"), systemImage: Symbols.archive)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Archive \(session.projectName)")
-
-                Button {
-                    onReveal(session)
-                } label: {
-                    Label(loc("Reveal"), systemImage: Symbols.reveal)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Reveal \(session.projectName) in Finder")
+                rowButton(loc("Archive"), Symbols.archive) { onArchive(session) }
+                rowButton(loc("Reveal"), Symbols.reveal) { onReveal(session) }
             }
-            .font(.cdBody)
-            .padding(.leading, Spacing.lg)
         }
-        .padding(.leading, Spacing.lg)
+        .padding(.leading, 16)
+    }
+
+    private func rowButton(_ title: String, _ symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: symbol).font(.cdSubhead)
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.small)
+        .tint(.coral)
     }
 
     private func toggle() {

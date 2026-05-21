@@ -228,6 +228,25 @@ final class AppViewModel: ObservableObject {
         dismissPanel?()
     }
 
+    /// 在首选终端打开该项目并运行 `claude`（不归档，仅打开）。
+    func openInTerminal(_ session: SessionInfo) {
+        let projectRoot = URL(fileURLWithPath: session.projectPath, isDirectory: true)
+        let command = TerminalLauncher.buildCommand(
+            workingDir: projectRoot,
+            proxy: settings.proxyConfig,
+            injectProxy: settings.injectProxyToTerminal)
+        do {
+            try TerminalLauncher().launch(
+                terminal: settings.preferredTerminal,
+                command: command,
+                workingDir: projectRoot)
+            dismissPanel?()
+        } catch {
+            notifications.send(subtitle: loc("Terminal launch failed"),
+                               body: loc("Grant Automation permission in System Settings."))
+        }
+    }
+
     // MARK: - F3 Park & Restart
 
     func parkActiveSession() {

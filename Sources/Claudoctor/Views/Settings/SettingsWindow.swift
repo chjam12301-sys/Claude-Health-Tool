@@ -35,6 +35,9 @@ struct SettingsWindow: View {
         }
         .frame(width: 480)
         .frame(minHeight: 520, maxHeight: 760)
+        .background(Color.creamBg)
+        .tint(.coral)
+        .preferredColorScheme(.light)
         .alert(loc("Reset all settings to defaults?"), isPresented: $showResetConfirm) {
             Button(loc("Reset"), role: .destructive) { viewModel.resetSettings() }
             Button(loc("Cancel"), role: .cancel) {}
