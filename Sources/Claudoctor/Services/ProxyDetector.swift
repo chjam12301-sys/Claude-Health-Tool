@@ -1,21 +1,22 @@
+import CFNetwork
 import Foundation
-import Network
 
-/// 端口探测 + 候选代理验证（TechSpec §08.6 F6 / §09.8 / BR-029 / BR-030，V1）。
+/// 候选代理探测 + 验证（TechSpec §08.6 F6 / §09.8，V1）。
+///
+/// 不再用 NWConnection 做 TCP 端口预探测——它的建连超时（300ms）会把开着的端口
+/// 误判为关闭（如 7993），导致自动检测失败而手动成功。改为直接用 curl 逐个验证
+/// 候选（与手动同一条可靠路径）：localhost 关闭端口的 refused 是秒级返回，代价可控。
 final class ProxyDetector {
     private let tester: ProxyTester
-    private let probeQueue = DispatchQueue(label: "com.sunnycao.claudoctor.proxyprobe")
 
     init(tester: ProxyTester = ProxyTester()) {
         self.tester = tester
     }
 
-    /// 跑一次完整探测：扫端口 → 验证候选 → 返回第一个可达代理（或 nil）。
+    /// 跑一次完整探测：系统代理 + 常见端口候选 → 逐个 curl 验证 → 返回第一个可达（或 nil）。
     func detect() async -> URL? {
-        let candidates = await scanPorts()
-        for proxy in candidates {
-            let result = await tester.test(
-                via: proxy, timeout: AppSettings.proxyReachabilityTimeoutSec)
+        for proxy in candidates() {
+            let result = await tester.test(via: proxy, timeout: 4)
             if result.status == .reachable {
                 return proxy
             }
@@ -23,68 +24,44 @@ final class ProxyDetector {
         return nil
     }
 
-    /// 并发探测 commonProxyPorts，返回连通端口对应的 `http://127.0.0.1:<port>`，
-    /// 保持 commonProxyPorts 的优先级顺序（BR-029）。
-    func scanPorts() async -> [URL] {
-        let openPorts = await withTaskGroup(of: (Int, Bool).self) { group -> Set<Int> in
-            for port in AppSettings.commonProxyPorts {
-                group.addTask { (port, await self.probePort(port)) }
-            }
-            var result = Set<Int>()
-            for await (port, isOpen) in group where isOpen {
-                result.insert(port)
-            }
-            return result
+    /// 候选列表：系统代理（最高优先）+ 常见本地端口，去重保序。
+    func candidates() -> [URL] {
+        var list: [URL] = []
+        if let system = systemProxyCandidate() {
+            list.append(system)
         }
-        return AppSettings.commonProxyPorts
-            .filter { openPorts.contains($0) }
-            .compactMap { URL(string: "http://127.0.0.1:\($0)") }
+        list.append(contentsOf: AppSettings.commonProxyPorts.compactMap {
+            URL(string: "http://127.0.0.1:\($0)")
+        })
+        var seen = Set<String>()
+        return list.filter { seen.insert($0.absoluteString).inserted }
     }
 
-    /// 单端口 TCP 探测，超时 300ms（BR-030）。
-    func probePort(_ port: Int) async -> Bool {
-        guard let nwPort = NWEndpoint.Port(rawValue: UInt16(port)) else { return false }
+    /// 读取 macOS 系统网络代理设置（很多代理 App 会写入），作为最高优先候选。
+    /// HTTPS / HTTP 代理用 `http://` scheme（CONNECT 隧道），SOCKS 用 `socks5://`。
+    func systemProxyCandidate() -> URL? {
+        guard let raw = CFNetworkCopySystemProxySettings()?.takeRetainedValue(),
+              let dict = raw as? [String: Any] else { return nil }
 
-        return await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
-            let connection = NWConnection(host: "127.0.0.1", port: nwPort, using: .tcp)
-            let once = ResumeOnce()
+        func enabled(_ key: CFString) -> Bool { (dict[key as String] as? Int) == 1 }
+        func string(_ key: CFString) -> String? { dict[key as String] as? String }
+        func int(_ key: CFString) -> Int? { dict[key as String] as? Int }
 
-            func finish(_ value: Bool) {
-                guard once.tryResume() else { return }
-                connection.cancel()
-                continuation.resume(returning: value)
-            }
-
-            connection.stateUpdateHandler = { state in
-                switch state {
-                case .ready:
-                    finish(true)
-                case .failed, .cancelled:
-                    finish(false)
-                default:
-                    break
-                }
-            }
-            connection.start(queue: probeQueue)
-
-            probeQueue.asyncAfter(
-                deadline: .now() + .milliseconds(AppSettings.proxyPortProbeTimeoutMs)
-            ) {
-                finish(false)
-            }
+        if enabled(kCFNetworkProxiesHTTPSEnable),
+           let host = string(kCFNetworkProxiesHTTPSProxy),
+           let port = int(kCFNetworkProxiesHTTPSPort) {
+            return URL(string: "http://\(host):\(port)")
         }
-    }
-}
-
-/// 线程安全的"只 resume 一次"守卫。
-private final class ResumeOnce: @unchecked Sendable {
-    private let lock = NSLock()
-    private var done = false
-
-    func tryResume() -> Bool {
-        lock.lock(); defer { lock.unlock() }
-        if done { return false }
-        done = true
-        return true
+        if enabled(kCFNetworkProxiesHTTPEnable),
+           let host = string(kCFNetworkProxiesHTTPProxy),
+           let port = int(kCFNetworkProxiesHTTPPort) {
+            return URL(string: "http://\(host):\(port)")
+        }
+        if enabled(kCFNetworkProxiesSOCKSEnable),
+           let host = string(kCFNetworkProxiesSOCKSProxy),
+           let port = int(kCFNetworkProxiesSOCKSPort) {
+            return URL(string: "socks5://\(host):\(port)")
+        }
+        return nil
     }
 }

@@ -37,7 +37,7 @@ extension AppSettings {
     static let mandatoryGapMB = 1                     // bloated - warning >= 1
 
     // V1
-    static let commonProxyPorts = [7890, 7891, 7993, 1080, 8080]
+    static let commonProxyPorts = [7890, 7891, 7897, 7892, 1087, 1086, 1080, 6152, 8118, 8080, 2080, 7993]
     static let proxyPortProbeTimeoutMs = 300
     static let proxyReachabilityTimeoutSec = 5.0
     static let proxyAutoRetestIntervalSec: TimeInterval = 300  // 每 5 分钟
