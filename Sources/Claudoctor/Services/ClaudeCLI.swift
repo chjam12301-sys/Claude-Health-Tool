@@ -50,10 +50,13 @@ final class ClaudeCLI {
     var isAvailable: Bool { executableURL != nil }
 
     /// 生成 handoff 摘要（API-02 / BR-017）。`environment` 由调用方注入代理（BR-035）。
+    /// `workingDirectory` 必须设为项目目录——Claude Code 按当前目录定位会话，
+    /// 否则 `--resume` 找不到该会话。
     func runHandoff(
         sessionID: String,
         prompt: String,
         environment: [String: String],
+        workingDirectory: URL?,
         timeout: TimeInterval = 60
     ) async throws -> String {
         let url: URL
@@ -70,6 +73,7 @@ final class ClaudeCLI {
             executableURL: url,
             arguments: ["-p", prompt, "--resume", sessionID, "--output-format", "json"],
             environment: environment,
+            currentDirectory: workingDirectory,
             timeout: timeout
         )
 

@@ -65,15 +65,16 @@ struct HandoffGenerator {
     ) async throws -> URL {
         let env = ProxyEnvBuilder.subprocessEnv(
             base: ProcessRunner.loginShellEnvironment(), proxy: proxy)
+        let projectRoot = URL(fileURLWithPath: session.projectPath, isDirectory: true)
 
         let summary = try await cli.runHandoff(
             sessionID: session.id,
             prompt: Self.prompt,
             environment: env,
+            workingDirectory: projectRoot,
             timeout: timeout
         )
 
-        let projectRoot = URL(fileURLWithPath: session.projectPath, isDirectory: true)
         let notesDir = projectRoot.appendingPathComponent(".notes", isDirectory: true)
         try ensureNotesDirectory(notesDir)
 
