@@ -76,6 +76,9 @@ final class ParkAndRestartCoordinator: ObservableObject {
             }
         }
 
+        // Step 1：关掉旧会话的 claude 交互进程。在归档前杀，避免它退出时把 .jsonl 写回原位。
+        await ProcessKiller.killClaudeSessions(inProjectPath: session.projectPath)
+
         // Step 2：生成 handoff（BR-017）。失败仍继续（BR-018 / KS-05 / KS-06 / KS-12）。
         phase = .generatingHandoff
         var handoffPath: URL?
@@ -102,9 +105,16 @@ final class ParkAndRestartCoordinator: ObservableObject {
         // Step 6：启动新终端（BR-036）。失败弹 KS-07，但仍视为已 park。
         phase = .openingTerminal
         let projectRoot = URL(fileURLWithPath: session.projectPath, isDirectory: true)
-        let baseCommand = autoGrantPermissions
+        var baseCommand = autoGrantPermissions
             ? "claude --dangerously-skip-permissions"
             : "claude"
+        // 接力：新会话开场先读刚生成的交接笔记，做到「带着记忆重启」。
+        // prompt 用 ASCII（Warp 经 System Events 键入，避免中文输入法问题）。
+        if let handoffPath {
+            let prompt = "Read .notes/\(handoffPath.lastPathComponent) — a handoff note "
+                + "from the previous session — to catch up, then continue the work."
+            baseCommand += " \(prompt.shellQuoted)"
+        }
         let command = TerminalLauncher.buildCommand(
             workingDir: projectRoot,
             baseCommand: baseCommand,
