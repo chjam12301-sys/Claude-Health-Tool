@@ -33,10 +33,10 @@ struct MenuBarPanel: View {
         .preferredColorScheme(.light)
     }
 
-    /// 自适应屏幕可用高度（MenuBarExtra 不能超过屏幕），留边距，封顶 1200。
+    /// 自适应屏幕可用高度，约取一半，留边距，封顶 640。
     private var panelHeight: CGFloat {
         let available = NSScreen.main?.visibleFrame.height ?? 800
-        return min(max(available - 24, 480), 1200)
+        return min(max(available - 24, 460), 640)
     }
 
     // MARK: Tab bar
@@ -98,6 +98,7 @@ struct MenuBarPanel: View {
                     otherSessions
                 }
                 .padding(.bottom, Spacing.sm)
+                .frame(maxWidth: .infinity)
             }
             .frame(maxHeight: .infinity)
             healthFooter
@@ -107,22 +108,14 @@ struct MenuBarPanel: View {
     private var hero: some View {
         let bloated = viewModel.hasBloated
         return HStack(spacing: Spacing.sm) {
-            HeroArt(tint: bloated ? .coral : .statusHealthy, size: 36)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(bloated ? loc("Time to Park") : loc("Your Claude is healthy"))
-                    .font(.cdTitle)
-                Text(bloated
-                     ? locf("%d sessions need Park", viewModel.bloatedCount)
-                     : locf("%d projects all clear", viewModel.projectCount))
-                    .font(.cdFootnote)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
+            HeroArt(tint: bloated ? .coral : .statusHealthy, size: 32)
+            Text(bloated ? loc("Time to Park") : loc("Your Claude is healthy"))
+                .font(.cdTitle)
+                .lineLimit(1)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, Spacing.lg)
-        .padding(.top, Spacing.md)
-        .padding(.bottom, Spacing.sm)
+        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, Spacing.sm)
     }
 
     private var statsRow: some View {
@@ -132,7 +125,7 @@ struct MenuBarPanel: View {
                      emphasized: viewModel.hasBloated)
             StatCard(value: latencyValue, unit: latencyUnit, label: loc("Proxy latency"))
         }
-        .padding(.horizontal, Spacing.lg)
+        .padding(.horizontal, Spacing.md)
         .padding(.bottom, Spacing.md)
     }
 
@@ -148,7 +141,7 @@ struct MenuBarPanel: View {
                 Text(trailing).font(.cdSubhead).foregroundStyle(Color.coralDark)
             }
         }
-        .padding(.horizontal, Spacing.lg)
+        .padding(.horizontal, Spacing.md)
         .padding(.bottom, Spacing.xs)
     }
 
@@ -175,36 +168,32 @@ struct MenuBarPanel: View {
                             bloatedMB: viewModel.settings.bloatedThresholdMB,
                             isBloated: status != .healthy)
 
-            VStack(spacing: Spacing.sm) {
+            HStack(spacing: Spacing.sm) {
                 Button { viewModel.park(session) } label: {
-                    Label(loc("Park & Restart"), systemImage: Symbols.park)
-                        .font(.cdBody)
-                        .frame(maxWidth: .infinity)
+                    Label(loc("Park & Restart"), systemImage: Symbols.park).font(.cdSubhead)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.regular)
                 .tint(.coral)
                 .disabled(!viewModel.claudeCLIAvailable)
 
-                HStack(spacing: Spacing.sm) {
-                    Button { viewModel.park(session, autoGrant: true) } label: {
-                        Label(loc("Auto authorize"), systemImage: Symbols.autoPark)
-                            .font(.cdSubhead)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.regular)
-                    .tint(.coral)
-                    .disabled(!viewModel.claudeCLIAvailable)
-                    .help(loc("Start the new session with all permissions pre-approved (claude --dangerously-skip-permissions)."))
-
-                    Button { viewModel.revealInFinder(session) } label: {
-                        Image(systemName: Symbols.reveal).font(.cdBody)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.regular)
-                    .tint(.coral)
+                Button { viewModel.park(session, autoGrant: true) } label: {
+                    Label("Auto", systemImage: Symbols.autoPark).font(.cdSubhead)
                 }
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
+                .tint(.coral)
+                .disabled(!viewModel.claudeCLIAvailable)
+                .help(loc("Start the new session with all permissions pre-approved (claude --dangerously-skip-permissions)."))
+
+                Button { viewModel.revealInFinder(session) } label: {
+                    Image(systemName: Symbols.reveal)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
+                .tint(.coral)
+
+                Spacer(minLength: 0)
             }
         }
         .padding(Spacing.md)
@@ -219,7 +208,7 @@ struct MenuBarPanel: View {
                     RoundedRectangle(cornerRadius: Radius.lg)
                         .stroke(status.color.opacity(0.18)))
         )
-        .padding(.horizontal, Spacing.lg)
+        .padding(.horizontal, Spacing.md)
         .padding(.bottom, Spacing.md)
     }
 
@@ -242,7 +231,7 @@ struct MenuBarPanel: View {
                         )
                     }
                 }
-                .padding(.horizontal, Spacing.lg)
+                .padding(.horizontal, Spacing.md)
             }
         }
     }

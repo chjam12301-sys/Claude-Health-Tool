@@ -48,13 +48,21 @@ struct TerminalLauncher {
             end tell
             """)
         case .warp:
-            // Warp 暂不支持 URL scheme 注入命令/env，V1 简化版只跳目录（API-04 备注）。
+            // Warp 的 URL scheme 只能开标签、不能带命令，所以先在目标目录开新标签，
+            // 再用 System Events 把命令键入（需要「辅助功能 Accessibility」权限）。
             let encoded = workingDir.path
                 .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? workingDir.path
-            guard let url = URL(string: "warp://action/new_tab?path=\(encoded)") else {
-                throw LaunchError.processFailed("Couldn't build Warp URL")
+            if let url = URL(string: "warp://action/new_tab?path=\(encoded)") {
+                NSWorkspace.shared.open(url)
             }
-            NSWorkspace.shared.open(url)
+            try runAppleScript("""
+            tell application "Warp" to activate
+            delay 0.7
+            tell application "System Events"
+                keystroke "\(command.appleScriptEscaped)"
+                key code 36
+            end tell
+            """)
         case .ghostty:
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
