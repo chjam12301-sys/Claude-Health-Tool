@@ -228,11 +228,17 @@ final class AppViewModel: ObservableObject {
         dismissPanel?()
     }
 
-    /// 在首选终端打开该项目并运行 `claude`（不归档，仅打开）。
+    /// 在首选终端打开该项目并运行 `claude`（不归档）。若 `.notes/` 有交接笔记，
+    /// 新会话开场自动读最新那份接上进度。
     func openInTerminal(_ session: SessionInfo) {
         let projectRoot = URL(fileURLWithPath: session.projectPath, isDirectory: true)
+        var baseCommand = "claude"
+        if let note = HandoffGenerator.latestNoteFilename(projectRoot: projectRoot) {
+            baseCommand += " \(HandoffGenerator.relayPrompt(noteFilename: note).shellQuoted)"
+        }
         let command = TerminalLauncher.buildCommand(
             workingDir: projectRoot,
+            baseCommand: baseCommand,
             proxy: settings.proxyConfig,
             injectProxy: settings.injectProxyToTerminal)
         do {

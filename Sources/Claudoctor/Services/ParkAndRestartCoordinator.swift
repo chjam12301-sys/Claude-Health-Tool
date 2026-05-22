@@ -109,10 +109,8 @@ final class ParkAndRestartCoordinator: ObservableObject {
             ? "claude --dangerously-skip-permissions"
             : "claude"
         // 接力：新会话开场先读刚生成的交接笔记，做到「带着记忆重启」。
-        // prompt 用 ASCII（Warp 经 System Events 键入，避免中文输入法问题）。
         if let handoffPath {
-            let prompt = "Read .notes/\(handoffPath.lastPathComponent) — a handoff note "
-                + "from the previous session — to catch up, then continue the work."
+            let prompt = HandoffGenerator.relayPrompt(noteFilename: handoffPath.lastPathComponent)
             baseCommand += " \(prompt.shellQuoted)"
         }
         let command = TerminalLauncher.buildCommand(

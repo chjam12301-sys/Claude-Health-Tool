@@ -27,6 +27,34 @@ struct HandoffGenerator {
             .appendingPathComponent("\(f.string(from: now)).md")
     }
 
+    /// 新会话的"接力" prompt：让 claude 开场先读交接笔记接上进度。
+    /// 用 ASCII（Warp 经 System Events 键入，避免中文输入法问题）。
+    static func relayPrompt(noteFilename: String) -> String {
+        "Read .notes/\(noteFilename) — a handoff note from a previous session "
+            + "— to catch up, then continue the work."
+    }
+
+    /// 项目 `.notes/` 下最新的交接笔记文件名（排除 README.md）。无则 nil。
+    static func latestNoteFilename(
+        projectRoot: URL,
+        fileManager: FileManager = .default
+    ) -> String? {
+        let notesDir = projectRoot.appendingPathComponent(".notes", isDirectory: true)
+        guard let files = try? fileManager.contentsOfDirectory(
+            at: notesDir,
+            includingPropertiesForKeys: [.contentModificationDateKey],
+            options: [.skipsHiddenFiles]
+        ) else { return nil }
+
+        let notes = files.filter { $0.pathExtension == "md" && $0.lastPathComponent != "README.md" }
+        let latest = notes.max { lhs, rhs in
+            let l = (try? lhs.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+            let r = (try? rhs.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+            return l < r
+        }
+        return latest?.lastPathComponent
+    }
+
     /// 生成 handoff 并写入项目 `.notes/`。失败抛出 `ClaudeCLI.ClaudeCLIError`。
     /// 返回写入的文件 URL。
     func generate(
