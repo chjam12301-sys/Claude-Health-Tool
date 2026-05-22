@@ -1,15 +1,16 @@
 # Claudoctor
 
-> Mac 菜单栏应用 — 自动监控并维护 Claude Code 会话健康。
-> Keeps your Claude Code sessions healthy, right from the menu bar.
+**简体中文** · [English](README.en.md)
 
-Claude Code 把每个会话存成 `~/.claude/projects/` 下的 `.jsonl` 文件。会话越聊越大，上下文被污染、响应变慢。Claudoctor 在菜单栏盯着这些文件，一眼看清健康度，自动归档臃肿会话，并能一键 **暂存并重启（Park & Restart）**——带着记忆开一个干净的新会话。
+> Mac 菜单栏应用 — 自动监控并维护 **Claude Code CLI** 的会话健康。
+
+**Claudoctor 是 Claude Code 命令行工具(`claude` CLI)的配套增强。** 它不替代 CLI，而是在后台帮你打理 CLI 产生的会话历史：Claude Code 把每个会话存成 `~/.claude/projects/` 下的 `.jsonl` 文件，会话越聊越大、上下文被污染、响应变慢。Claudoctor 在菜单栏盯着这些文件，一眼看清健康度，自动归档臃肿会话，并能一键 **暂存并重启（Park & Restart）**——带着记忆开一个干净的新会话。
 
 ---
 
 ## 安装
 
-需要 **macOS 13 (Ventura) 及以上**，并装好 Xcode 15+ / Swift 5.9+ 工具链。
+需要 **macOS 13 (Ventura) 及以上**，并装好 Xcode 15+ / Swift 5.9+ 工具链，以及 Claude Code CLI（`claude` 在 PATH 中）。
 
 ```bash
 git clone https://github.com/chjam12301-sys/Claude-Health-Tool.git
@@ -28,6 +29,14 @@ open Claudoctor.app
   - Warp：还需在 **系统设置 → 隐私与安全性 → 辅助功能** 勾选 Claudoctor（Warp 靠键入命令启动）。
 
 图标出现在屏幕顶部菜单栏（不在 Dock），是一个听诊器 🩺。
+
+---
+
+## 截图
+
+| 会话健康 | 代理状态 |
+|---|---|
+| ![Session health](docs/screenshots/session-health.png) | ![Proxy status](docs/screenshots/proxy-status.png) |
 
 ---
 
