@@ -68,6 +68,7 @@ struct MenuBarPanel: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .focusable(false)
     }
 
     // MARK: - Health tab

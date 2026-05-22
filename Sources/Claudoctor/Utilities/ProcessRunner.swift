@@ -51,6 +51,11 @@ enum ProcessRunner {
             throw ProcessRunnerError.launchFailed(error.localizedDescription)
         }
 
+        // 关掉父进程持有的管道写端：否则子进程退出后 readToEnd 仍等不到 EOF，
+        // 会永久挂起（curl 早已结束但 run() 不返回，导致预检/检测一直卡住）。
+        try? stdoutPipe.fileHandleForWriting.close()
+        try? stderrPipe.fileHandleForWriting.close()
+
         // 后台读管道，避免输出填满 64KB 缓冲导致死锁；进程退出后管道 EOF，读结束。
         async let outData = readToEnd(stdoutPipe.fileHandleForReading)
         async let errData = readToEnd(stderrPipe.fileHandleForReading)
