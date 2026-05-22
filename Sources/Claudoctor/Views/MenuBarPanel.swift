@@ -27,8 +27,8 @@ struct MenuBarPanel: View {
                 }
             }
         }
-        .frame(width: 400)
-        .frame(maxHeight: 760)
+        .frame(width: 280)
+        .frame(maxHeight: 1520)
         .background(Color.panelWhite)
         .preferredColorScheme(.light)
     }
@@ -90,7 +90,7 @@ struct MenuBarPanel: View {
                 }
                 .padding(.bottom, Spacing.sm)
             }
-            .frame(maxHeight: 620)
+            .frame(maxHeight: 1240)
             healthFooter
         }
     }
@@ -166,7 +166,7 @@ struct MenuBarPanel: View {
                             bloatedMB: viewModel.settings.bloatedThresholdMB,
                             isBloated: status != .healthy)
 
-            HStack(spacing: Spacing.sm) {
+            VStack(spacing: Spacing.sm) {
                 Button { viewModel.park(session) } label: {
                     Label(loc("Park & Restart"), systemImage: Symbols.park)
                         .font(.cdBody)
@@ -177,21 +177,25 @@ struct MenuBarPanel: View {
                 .tint(.coral)
                 .disabled(!viewModel.claudeCLIAvailable)
 
-                Button { viewModel.park(session, autoGrant: true) } label: {
-                    Image(systemName: Symbols.autoPark).font(.cdBody)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .tint(.coral)
-                .disabled(!viewModel.claudeCLIAvailable)
-                .help(loc("Start the new session with all permissions pre-approved (claude --dangerously-skip-permissions)."))
+                HStack(spacing: Spacing.sm) {
+                    Button { viewModel.park(session, autoGrant: true) } label: {
+                        Label(loc("Auto authorize"), systemImage: Symbols.autoPark)
+                            .font(.cdSubhead)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                    .tint(.coral)
+                    .disabled(!viewModel.claudeCLIAvailable)
+                    .help(loc("Start the new session with all permissions pre-approved (claude --dangerously-skip-permissions)."))
 
-                Button { viewModel.revealInFinder(session) } label: {
-                    Image(systemName: Symbols.reveal).font(.cdBody)
+                    Button { viewModel.revealInFinder(session) } label: {
+                        Image(systemName: Symbols.reveal).font(.cdBody)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                    .tint(.coral)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .tint(.coral)
             }
         }
         .padding(Spacing.md)
@@ -351,43 +355,40 @@ struct MenuBarPanel: View {
         let config = viewModel.settings.proxyConfig
         let viz = proxyViz(config)
         return VStack(spacing: 0) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    proxyHero(config: config, viz: viz)
-                    proxyDetailCard(config: config, viz: viz)
-                    if viz == .failed {
-                        Text(loc("Check that Clash / Surge is running, or switch to Manual mode in Settings."))
-                            .font(.cdFootnote)
-                            .foregroundStyle(.primary)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .padding(Spacing.md)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(RoundedRectangle(cornerRadius: Radius.md).fill(Color.coralBg))
-                            .padding(.horizontal, Spacing.lg)
-                            .padding(.bottom, Spacing.md)
-                    }
-                    HStack(spacing: Spacing.sm) {
-                        Button(action: runProxyAction) {
-                            Label(config.mode == .autoDetect ? loc("Re-detect") : loc("Test now"),
-                                  systemImage: config.mode == .autoDetect ? Symbols.rescan : Symbols.retest)
-                                .font(.cdBody).frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                        .tint(.coral)
-
-                        Button { openWin("settings") } label: {
-                            Image(systemName: Symbols.settings).font(.cdBody)
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
-                        .tint(.coral)
-                    }
-                    .padding(.horizontal, Spacing.lg)
-                    .padding(.bottom, Spacing.lg)
+            VStack(alignment: .leading, spacing: 0) {
+                proxyHero(config: config, viz: viz)
+                proxyDetailCard(config: config, viz: viz)
+                if viz == .failed {
+                    Text(loc("Check that Clash / Surge is running, or switch to Manual mode in Settings."))
+                        .font(.cdFootnote)
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(Spacing.md)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(RoundedRectangle(cornerRadius: Radius.md).fill(Color.coralBg))
+                        .padding(.horizontal, Spacing.lg)
+                        .padding(.bottom, Spacing.md)
                 }
+                HStack(spacing: Spacing.sm) {
+                    Button(action: runProxyAction) {
+                        Label(config.mode == .autoDetect ? loc("Re-detect") : loc("Test now"),
+                              systemImage: config.mode == .autoDetect ? Symbols.rescan : Symbols.retest)
+                            .font(.cdBody).frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .tint(.coral)
+
+                    Button { openWin("settings") } label: {
+                        Image(systemName: Symbols.settings).font(.cdBody)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                    .tint(.coral)
+                }
+                .padding(.horizontal, Spacing.lg)
+                .padding(.vertical, Spacing.lg)
             }
-            .frame(maxHeight: 620)
             healthFooter
         }
     }
