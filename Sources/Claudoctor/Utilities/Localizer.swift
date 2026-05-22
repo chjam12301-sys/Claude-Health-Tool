@@ -207,6 +207,8 @@ extension Localizer {
             "有 %d 个会话过肥了，建议先归档再开新会话",
         "Your Claude is healthy": "你的 Claude 很健康",
         "%d project(s) all clear — keep it up.": "%d 个项目全部正常，继续保持哦",
+        "%d projects all clear": "%d 个项目全部正常",
+        "%d sessions need Park": "%d 个会话需要 Park",
         "Projects": "项目监控",
         "Largest": "最大会话",
         "Proxy latency": "代理延迟",

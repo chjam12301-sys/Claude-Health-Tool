@@ -80,7 +80,7 @@ extension Font {
     static let cdSubhead = Font.system(size: 12, weight: .regular)
     static let cdFootnote = Font.system(size: 11, weight: .regular)
     static let cdMono = Font.system(size: 12, weight: .regular).monospacedDigit()
-    static let cdStat = Font.system(size: 18, weight: .semibold).monospacedDigit()
+    static let cdStat = Font.system(size: 16, weight: .semibold).monospacedDigit()
 }
 
 // MARK: - Animation

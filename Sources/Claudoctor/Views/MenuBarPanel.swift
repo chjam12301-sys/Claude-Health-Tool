@@ -28,9 +28,15 @@ struct MenuBarPanel: View {
             }
         }
         .frame(width: 280)
-        .frame(maxHeight: 1520)
+        .frame(height: panelHeight)
         .background(Color.panelWhite)
         .preferredColorScheme(.light)
+    }
+
+    /// 自适应屏幕可用高度（MenuBarExtra 不能超过屏幕），留边距，封顶 1200。
+    private var panelHeight: CGFloat {
+        let available = NSScreen.main?.visibleFrame.height ?? 800
+        return min(max(available - 24, 480), 1200)
     }
 
     // MARK: Tab bar
@@ -70,12 +76,15 @@ struct MenuBarPanel: View {
     private var healthTab: some View {
         if viewModel.appState == .claudeNotInstalled {
             notInstalledView
+            Spacer(minLength: 0)
             healthFooter
         } else if coordinator.isRunning {
             parkingView
+            Spacer(minLength: 0)
             healthFooter
         } else if viewModel.sessions.isEmpty {
             emptyView
+            Spacer(minLength: 0)
             healthFooter
         } else {
             ScrollView {
@@ -90,30 +99,30 @@ struct MenuBarPanel: View {
                 }
                 .padding(.bottom, Spacing.sm)
             }
-            .frame(maxHeight: 1240)
+            .frame(maxHeight: .infinity)
             healthFooter
         }
     }
 
     private var hero: some View {
         let bloated = viewModel.hasBloated
-        return HStack(spacing: Spacing.md) {
-            HeroArt(tint: bloated ? .coral : .statusHealthy, size: 52)
-            VStack(alignment: .leading, spacing: 2) {
+        return HStack(spacing: Spacing.sm) {
+            HeroArt(tint: bloated ? .coral : .statusHealthy, size: 36)
+            VStack(alignment: .leading, spacing: 1) {
                 Text(bloated ? loc("Time to Park") : loc("Your Claude is healthy"))
-                    .font(.cdHero)
+                    .font(.cdTitle)
                 Text(bloated
-                     ? locf("%d session(s) too heavy — archive before starting fresh.", viewModel.bloatedCount)
-                     : locf("%d project(s) all clear — keep it up.", viewModel.projectCount))
-                    .font(.cdSubhead)
+                     ? locf("%d sessions need Park", viewModel.bloatedCount)
+                     : locf("%d projects all clear", viewModel.projectCount))
+                    .font(.cdFootnote)
                     .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(1)
             }
             Spacer(minLength: 0)
         }
         .padding(.horizontal, Spacing.lg)
-        .padding(.top, Spacing.lg)
-        .padding(.bottom, Spacing.md)
+        .padding(.top, Spacing.md)
+        .padding(.bottom, Spacing.sm)
     }
 
     private var statsRow: some View {
@@ -173,7 +182,7 @@ struct MenuBarPanel: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .controlSize(.regular)
                 .tint(.coral)
                 .disabled(!viewModel.claudeCLIAvailable)
 
@@ -184,7 +193,7 @@ struct MenuBarPanel: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
-                    .controlSize(.large)
+                    .controlSize(.regular)
                     .tint(.coral)
                     .disabled(!viewModel.claudeCLIAvailable)
                     .help(loc("Start the new session with all permissions pre-approved (claude --dangerously-skip-permissions)."))
@@ -193,7 +202,7 @@ struct MenuBarPanel: View {
                         Image(systemName: Symbols.reveal).font(.cdBody)
                     }
                     .buttonStyle(.bordered)
-                    .controlSize(.large)
+                    .controlSize(.regular)
                     .tint(.coral)
                 }
             }
@@ -389,6 +398,7 @@ struct MenuBarPanel: View {
                 .padding(.horizontal, Spacing.lg)
                 .padding(.vertical, Spacing.lg)
             }
+            Spacer(minLength: 0)
             healthFooter
         }
     }
